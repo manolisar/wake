@@ -36,6 +36,15 @@ export interface LegView {
   portDisplay: string;
   daylightDisplay: string;
   hasDaylight: boolean;
+  // Numeric mirrors of the displays above, for downstream math (consumption
+  // orchestration). null = not computable for this leg.
+  timeHrsNum: number | null; // passage hours (prev FAW → this arrival)
+  speedNum: number | null; // passage speed, kn
+  stbyArrMin: number | null; // arrival St/By minutes (Arr − ETA)
+  stbyDepMin: number | null; // departure St/By minutes (FAW − Dep)
+  portMinNum: number | null; // port stay minutes (Dep − Arr)
+  stbyArrSpeedNum: number | null; // maneuvering speed, kn (dist ÷ time)
+  stbyDepSpeedNum: number | null;
 }
 
 export interface Summary {
@@ -85,6 +94,7 @@ export function computeVoyage(v: Voyage | undefined): VoyageComputation {
 
     let timeHrs: number | null = null;
     let speed: number | null = null;
+    let effSpeed: number | null = null; // passage speed for downstream math (both modes)
     let etaComputedMin: number | null = null;
 
     if (isPort) {
@@ -94,6 +104,7 @@ export function computeVoyage(v: Voyage | undefined): VoyageComputation {
         const spd = Number(leg.speed);
         if (canCalc && spd > 0 && d > 0) {
           timeHrs = d / spd;
+          effSpeed = spd; // effective passage speed = the operator's target
           const arrInst = (lastPort!.depInstant as number) + timeHrs * 60;
           etaComputedMin = arrInst + Number(leg.utc) * 60;
         }
@@ -102,6 +113,7 @@ export function computeVoyage(v: Voyage | undefined): VoyageComputation {
         if (canCalc && arrInst != null) {
           timeHrs = (arrInst - (lastPort!.depInstant as number)) / 60;
           if (d > 0 && timeHrs > 0) speed = d / timeHrs;
+          effSpeed = speed;
         }
       }
       if (timeHrs != null && d > 0 && timeHrs > 0) {
@@ -161,6 +173,13 @@ export function computeVoyage(v: Voyage | undefined): VoyageComputation {
         stbyDepTime: depStbyMin != null ? fmtHM(depStbyMin) : '—',
         stbyDepSpeed: depStbySpeed != null ? depStbySpeed.toFixed(1) : null,
         portDisplay: hasPort ? fmtHM(lPort) : '—',
+        timeHrsNum: timeHrs,
+        speedNum: effSpeed,
+        stbyArrMin: arrStbyMin,
+        stbyDepMin: depStbyMin,
+        portMinNum: hasPort ? lPort : null,
+        stbyArrSpeedNum: arrStbySpeed,
+        stbyDepSpeedNum: depStbySpeed,
         ...daylight(leg),
       };
       return view;
@@ -184,6 +203,13 @@ export function computeVoyage(v: Voyage | undefined): VoyageComputation {
       stbyDepTime: '—',
       stbyDepSpeed: null,
       portDisplay: '—',
+      timeHrsNum: null,
+      speedNum: null,
+      stbyArrMin: null,
+      stbyDepMin: null,
+      portMinNum: null,
+      stbyArrSpeedNum: null,
+      stbyDepSpeedNum: null,
       ...daylight(leg),
     };
   });

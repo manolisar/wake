@@ -25,6 +25,20 @@ describe('computeVoyage — SPD mode (voyage 586)', () => {
     expect(r.portDisplay).toBe('9:00'); // Dep−Arr
   });
 
+  it('surfaces numeric mirrors for downstream math (Basseterre, idx 3)', () => {
+    const r = legViews[3];
+    expect(r.timeHrsNum).toBeCloseTo(62.0, 5);
+    expect(r.speedNum).toBeCloseTo(1130 / 62, 5);
+    expect(r.stbyArrMin).toBe(60);
+    expect(r.stbyDepMin).toBe(60);
+    expect(r.portMinNum).toBe(9 * 60);
+    expect(r.stbyArrSpeedNum).toBeCloseTo(11.0, 5);
+    expect(r.stbyDepSpeedNum).toBeCloseTo(9.0, 5);
+    // At-sea carriers expose nulls.
+    expect(legViews[1].timeHrsNum).toBeNull();
+    expect(legViews[1].speedNum).toBeNull();
+  });
+
   it('rolls St/By time into the summary (arr + dep across legs)', () => {
     // Basseterre alone contributes 2:00 of St/By; total must be ≥ that.
     expect(summary.stbyMin >= 120).toBe(true);
@@ -57,6 +71,11 @@ describe('computeVoyage — TIME mode (voyage 587)', () => {
     expect(r.etaComputed).toBe(true);
     expect(r.timeDisplay).toBe('23:20'); // 420 nm / 18 kn = 23.333 h
     expect(r.etaDisplay).toBe('16:50');
+    // TIME mode: the target speed is the effective passage speed…
+    expect(r.speedNum).toBeCloseTo(18, 5);
+    expect(r.timeHrsNum).toBeCloseTo(420 / 18, 5);
+    // …but the computed-speed display stays off (speed is the input here).
+    expect(r.speedDisplay).toBeNull();
   });
 });
 
