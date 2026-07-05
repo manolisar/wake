@@ -1,0 +1,16 @@
+node_modules
+dist
+dist-ssr
+*.local
+.DS_Store
+.vite
+coverage
+
+# editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+
+# local QA / browser-tool artifacts
+.playwright-cli
+output

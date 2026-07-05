@@ -1,0 +1,214 @@
+@import 'tailwindcss';
+
+/* ── Voyage Speed Tracker theme (CSS-first Tailwind v4) ──────────────────
+   Palette + fonts lifted verbatim from the Claude Design artifact so the
+   rebuild is visually 1:1. Tokens here become Tailwind utilities, e.g.
+   `bg-bg`, `text-ink`, `border-line`, `text-cyan`. */
+@theme {
+  --font-sans: 'Manrope', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+
+  --color-bg: #fafbfd;
+  --color-surface: #ffffff;
+  --color-rail: #f3f5f9;
+  --color-ink: #1a2233;
+  --color-muted: #6b7b8f;
+  /* faint darkened from #b0bac6 (~1.9:1, failed WCAG AA) to ~4.6:1 on white */
+  --color-faint: #6b7689;
+  --color-line: #e5e9f0;
+
+  --color-cyan: #06b6d4;
+  --color-cyan-deep: #0891b2;
+  --color-sky: #0284c7;
+  --color-indigo: #6366f1;
+  --color-navy: #102a43;
+  /* strong filled button (Lock Voyage) — overridden per theme for contrast */
+  --color-btn-strong: #102a43;
+  --color-green: #059669;
+  --color-amber: #d97706;
+  --color-amber-btn: #f59e0b;
+  --color-orange: #ea580c;
+  --color-pink: #db2777;
+  --color-blue: #2563eb;
+
+  /* speed-band badges */
+  --color-spd-hi-fg: #b91c1c;
+  --color-spd-hi-bg: #fee2e2;
+  --color-spd-lo-fg: #7c3aed;
+  --color-spd-lo-bg: #f3e8ff;
+  --color-spd-ok-fg: #047857;
+  --color-spd-ok-bg: #ecfdf5;
+}
+
+/* ── Named themes — each redefines the structural tokens so every token-based
+   utility (bg-surface, text-ink, border-line, …) re-skins automatically. The
+   saturated accent colours (cyan, speed bands, per-metric band hues) read on
+   all three. "default" is the base @theme above (no data-theme attribute). */
+
+/* Admiralty Chart — warm parchment surfaces, ink-navy text, hairline rules. */
+:root[data-theme='admiralty'] {
+  --color-bg: #ece3cf;
+  --color-surface: #f7f1e1;
+  --color-rail: #e8dfc8;
+  --color-ink: #25303b;
+  --color-muted: #6c6553;
+  --color-faint: #847d69;
+  --color-line: #d7cbac;
+  --color-btn-strong: #2b3a30;
+}
+
+/* Bridge Console — deep-navy "bridge at night" with phosphor accents. */
+:root[data-theme='console'] {
+  --color-bg: #0b1622;
+  --color-surface: #10202f;
+  --color-rail: #16283a;
+  --color-ink: #e6eef7;
+  --color-muted: #9db0c4;
+  --color-faint: #6e8499;
+  --color-line: #22384c;
+  --color-btn-strong: #244763;
+  /* brighter speed-band text so the coloured digits read on the dark surface */
+  --color-spd-hi-fg: #f87171;
+  --color-spd-lo-fg: #a78bfa;
+  --color-spd-ok-fg: #34d399;
+}
+
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+#root {
+  height: 100vh;
+}
+input,
+textarea,
+button {
+  font-family: inherit;
+}
+button {
+  touch-action: manipulation;
+}
+
+/* Keyboard focus ring for every interactive element (zero-specificity :where
+   so component classes can still override). Visible only for keyboard users. */
+:where(button, a, input, textarea, select, [role='button'], [tabindex]):focus-visible {
+  outline: 2px solid var(--color-cyan);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Reset native button chrome so a semantic <button> can render like the plain
+   div/span it replaced (keyboard + a11y for free, identical visuals). */
+.vt-unbutton {
+  appearance: none;
+  background: none;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+
+/* Visually-hidden but available to assistive tech. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Skip-to-content link: off-screen until focused. */
+.skip-link {
+  position: absolute;
+  left: 8px;
+  top: -48px;
+  z-index: 100;
+  background: var(--color-cyan);
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: top 0.15s ease;
+}
+.skip-link:focus {
+  top: 8px;
+}
+
+@keyframes vtSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes vtScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.vt-slide-up {
+  animation: vtSlideUp 0.3s ease;
+}
+.vt-scale-in {
+  animation: vtScaleIn 0.15s ease;
+}
+
+/* themed scrollbar (from the design) */
+.vt-scroll::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.vt-scroll::-webkit-scrollbar-thumb {
+  background: #cfd8e3;
+  border-radius: 8px;
+  border: 2px solid var(--color-bg);
+}
+.vt-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Excel-style fill handle: small square at a cell's corner. Revealed on cell
+   hover or when the cell's input is focused (the handle lives in a span wrapper
+   inside the td, so this is a descendant match, not a direct child). */
+.vt-fill-handle {
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+td:hover .vt-fill-handle,
+td:focus-within .vt-fill-handle,
+.vt-fill-handle:active {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
