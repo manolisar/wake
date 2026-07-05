@@ -126,6 +126,8 @@ function normalizeLeg(raw: unknown): Leg {
     seaCond: str(o.seaCond),
     stbyArrDist: str(o.stbyArrDist),
     stbyDepDist: str(o.stbyDepDist),
+    stbyArrPowerMW: str(o.stbyArrPowerMW),
+    stbyDepPowerMW: str(o.stbyDepPowerMW),
     remarks: str(o.remarks),
     speed: str(o.speed),
   };

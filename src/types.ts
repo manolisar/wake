@@ -12,6 +12,12 @@
 // All time fields are 'HH:MM' strings (24h). `utc` is the signed offset hours
 // as a string (e.g. '-4'). `openLoop` / `seaCond` are HH:MM durations.
 
+import type {
+  ConsumptionOverrides,
+  ConsumptionSettings,
+  VoyageConsumption,
+} from './domain/consumption/types';
+
 export type LegType = 'Port' | 'Sea' | 'Tender';
 export type LegMode = 'speed' | 'time';
 
@@ -32,6 +38,11 @@ export interface Leg {
   seaCond: string; // HH:MM duration
   stbyArrDist: string; // nm covered during arrival St/By (pilot/ETA → berth/Arr)
   stbyDepDist: string; // nm covered during departure St/By (berth/Dep → FAW)
+  // Per-leg St/By power overrides (total MW) for the consumption calc. '' = no
+  // override: use the speed-derived power when a distance exists, else the
+  // fallback default. App-only fields like stbyArrDist — not in the Excel file.
+  stbyArrPowerMW: string;
+  stbyDepPowerMW: string;
   remarks: string;
   speed: string; // kn target (input in time mode)
 }
@@ -52,6 +63,10 @@ export interface Voyage {
   loggedBy: string;
   legs: Leg[];
   versions: Version[];
+  /** Per-voyage parameter overrides on top of the file's consumption defaults. */
+  consumptionOverrides?: ConsumptionOverrides;
+  /** Snapshot of the last "Calculate Consumption" run (settings + results). */
+  consumption?: VoyageConsumption;
 }
 
 export type VoyageMap = Record<string, Voyage>;
@@ -67,6 +82,8 @@ export interface Bundle {
   exportedAt: string;
   selectedId: string;
   voyages: VoyageMap;
+  /** Ship-level consumption defaults for this file (v2 bundles). */
+  consumptionDefaults?: ConsumptionSettings;
 }
 
 // ── Fleet & roles (Solstice-class, mirrors Voyage Tracker v8) ────────────

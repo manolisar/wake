@@ -200,6 +200,8 @@ function parseSheet(get: (r: number, col: number) => CellVal, lastRow: number): 
       seaCond: '',
       stbyArrDist: '',
       stbyDepDist: '',
+      stbyArrPowerMW: '',
+      stbyDepPowerMW: '',
       remarks: cellStr(get(r, 15)),
       speed: '',
     });

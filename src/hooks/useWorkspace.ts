@@ -399,6 +399,8 @@ export function useWorkspace(session: Session): WorkspaceApi {
       seaCond: '',
       stbyArrDist: '',
       stbyDepDist: '',
+      stbyArrPowerMW: '',
+      stbyDepPowerMW: '',
       remarks: '',
       speed: '',
     }),

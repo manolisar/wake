@@ -26,6 +26,8 @@ function leg(p: Partial<Leg>): Leg {
     seaCond: p.seaCond ?? '',
     stbyArrDist: p.stbyArrDist ?? '',
     stbyDepDist: p.stbyDepDist ?? '',
+    stbyArrPowerMW: p.stbyArrPowerMW ?? '',
+    stbyDepPowerMW: p.stbyDepPowerMW ?? '',
     remarks: p.remarks ?? '',
     speed: p.speed ?? '',
   };
