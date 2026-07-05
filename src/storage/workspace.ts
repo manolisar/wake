@@ -5,6 +5,7 @@
 // handle. Chromium/Edge only (File System Access API directory pickers); the
 // corporate target. No directory access = the app can't run the folder flow.
 import type { Bundle, VoyageMap } from '../types';
+import type { ConsumptionSettings } from '../domain/consumption/types';
 import { buildBundle, parseBundle } from './bundle';
 import { fileStartKey } from '../domain/schedule';
 
@@ -42,6 +43,8 @@ export interface WorkspaceFile {
   shipId: string; // bundle.shipId (display only)
   voyages: VoyageMap;
   selectedId: string;
+  /** Ship-level consumption defaults stored in this file (v2 bundles). */
+  consumptionDefaults?: ConsumptionSettings;
   error?: string; // set if the file failed to parse
 }
 
@@ -86,6 +89,7 @@ export async function readWorkspace(dir: WDirHandle): Promise<WorkspaceLoad> {
         shipId: bundle.shipId || '',
         voyages: bundle.voyages,
         selectedId: bundle.selectedId || Object.keys(bundle.voyages)[0] || '',
+        consumptionDefaults: bundle.consumptionDefaults,
       });
     } catch (e) {
       files.push({ name: entry.name, shipId: '', voyages: {}, selectedId: '', error: (e as Error).message });
@@ -101,7 +105,7 @@ export async function readWorkspace(dir: WDirHandle): Promise<WorkspaceLoad> {
 }
 
 function bundleFor(file: WorkspaceFile): Bundle {
-  return buildBundle(file.voyages, file.selectedId, file.shipId);
+  return buildBundle(file.voyages, file.selectedId, file.shipId, file.consumptionDefaults);
 }
 
 /** Write a file's voyages back to its handle in place. */

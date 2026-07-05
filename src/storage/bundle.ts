@@ -10,13 +10,23 @@
 //   "voyages": { "586": { id, title, legs: [...], ... }, ... }
 // }
 import type { Bundle, Leg, LegType, Voyage, VoyageMap } from '../types';
+import type { ConsumptionSettings, VoyageConsumption } from '../domain/consumption/types';
+import { normalizeOverrides, normalizeSettings } from '../domain/consumption/settings';
 
-export const BUNDLE_VERSION = 1;
+// v2 adds consumption: per-file defaults, per-voyage overrides + snapshot.
+// v1 files (pre-consumption) still parse — the new fields are simply absent.
+export const BUNDLE_VERSION = 2;
+const ACCEPTED_VERSIONS = new Set([1, 2]);
 export const APP_ID = 'voyage-speed-planner-sl';
 // 25 MB guard so a malformed/hostile file can't OOM the tab on JSON.parse.
 const MAX_BYTES = 25 * 1024 * 1024;
 
-export function buildBundle(voyages: VoyageMap, selectedId: string, shipId = ''): Bundle {
+export function buildBundle(
+  voyages: VoyageMap,
+  selectedId: string,
+  shipId = '',
+  consumptionDefaults?: ConsumptionSettings
+): Bundle {
   return {
     bundleVersion: BUNDLE_VERSION,
     app: APP_ID,
@@ -24,6 +34,7 @@ export function buildBundle(voyages: VoyageMap, selectedId: string, shipId = '')
     exportedAt: new Date().toISOString(),
     selectedId,
     voyages,
+    ...(consumptionDefaults ? { consumptionDefaults } : null),
   };
 }
 
@@ -61,9 +72,9 @@ export function parseBundle(text: string): Bundle {
     return buildBundle({ [id]: normalizeVoyage(v, id) }, id);
   }
 
-  if (p.bundleVersion !== BUNDLE_VERSION) {
+  if (!ACCEPTED_VERSIONS.has(p.bundleVersion as number)) {
     throw new Error(
-      `Unsupported file: expected bundleVersion ${BUNDLE_VERSION} or a single voyage JSON ` +
+      `Unsupported file: expected bundleVersion 1–${BUNDLE_VERSION} or a single voyage JSON ` +
         `(with a \`legs\` array); got bundleVersion ${String(p.bundleVersion)}`,
     );
   }
@@ -83,7 +94,11 @@ export function parseBundle(text: string): Bundle {
       ? p.selectedId
       : Object.keys(voyages)[0] ?? '';
   const shipId = typeof p.shipId === 'string' ? p.shipId : '';
-  return buildBundle(voyages, selectedId, shipId);
+  // Per-file consumption defaults: kept only if present; invalid blobs are
+  // normalized field-by-field (same never-crash stance as leg clamping).
+  const consumptionDefaults =
+    p.consumptionDefaults != null ? normalizeSettings(p.consumptionDefaults) : undefined;
+  return buildBundle(voyages, selectedId, shipId, consumptionDefaults);
 }
 
 // Fill any missing top-level voyage fields so downstream code can trust the shape.
@@ -98,6 +113,40 @@ function normalizeVoyage(v: Voyage, id: string): Voyage {
     loggedBy: typeof v.loggedBy === 'string' ? v.loggedBy : '',
     legs: Array.isArray(v.legs) ? v.legs.map(normalizeLeg) : [],
     versions: Array.isArray(v.versions) ? v.versions : [],
+    ...(() => {
+      const overrides = normalizeOverrides(v.consumptionOverrides);
+      return overrides ? { consumptionOverrides: overrides } : null;
+    })(),
+    ...(() => {
+      const snap = normalizeConsumptionSnapshot(v.consumption);
+      return snap ? { consumption: snap } : null;
+    })(),
+  };
+}
+
+// A persisted consumption snapshot is display data — trust its numbers but
+// verify the envelope so a hand-edited blob can't crash the report. Anything
+// structurally off is dropped (the user just recalculates).
+function normalizeConsumptionSnapshot(v: unknown): VoyageConsumption | undefined {
+  if (!v || typeof v !== 'object') return undefined;
+  const o = v as Record<string, unknown>;
+  if (
+    typeof o.computedAt !== 'string' ||
+    typeof o.inputSignature !== 'string' ||
+    !Array.isArray(o.legs) ||
+    !o.totals || typeof o.totals !== 'object' ||
+    !o.settings || typeof o.settings !== 'object'
+  ) {
+    return undefined;
+  }
+  return {
+    computedAt: o.computedAt,
+    by: typeof o.by === 'string' ? o.by : '',
+    settings: normalizeSettings(o.settings),
+    inputSignature: o.inputSignature,
+    legs: o.legs as VoyageConsumption['legs'],
+    totals: o.totals as VoyageConsumption['totals'],
+    warnings: Array.isArray(o.warnings) ? o.warnings.filter((w) => typeof w === 'string') : [],
   };
 }
 
