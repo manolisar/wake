@@ -21,6 +21,17 @@ import {
 } from '../storage/workspace';
 import { exportExcel, importExcel, type XlsxScope } from '../storage/excel';
 import { saveDirHandle, loadDirHandle } from '../storage/idbHandle';
+import type {
+  ConsumptionOverrides,
+  ConsumptionSettings,
+  VoyageConsumption,
+} from '../domain/consumption/types';
+import { DEFAULT_CONSUMPTION_SETTINGS } from '../domain/consumption/engineDefaults';
+import { resolveSettings } from '../domain/consumption/settings';
+import {
+  computeVoyageConsumption,
+  consumptionSignature,
+} from '../domain/consumption/voyageConsumption';
 
 function nowStamp(): string {
   const d = new Date();
@@ -127,6 +138,18 @@ export interface WorkspaceApi {
 
   doSaveJson: () => Promise<void>;
   doExportExcel: (scope: XlsxScope) => Promise<void>;
+
+  // ── Consumption (fuel) ────────────────────────────────────────────────
+  consumptionDefaults: ConsumptionSettings; // current file's defaults (or built-in)
+  consumptionResult: VoyageConsumption | undefined; // persisted snapshot or view-only transient
+  consumptionStale: boolean; // inputs/settings changed since the snapshot ran
+  showFuelSetup: boolean;
+  showReport: boolean;
+  setShowFuelSetup: (open: boolean) => void;
+  setShowReport: (open: boolean) => void;
+  setConsumptionDefaults: (s: ConsumptionSettings) => void;
+  setVoyageOverrides: (o: ConsumptionOverrides | undefined) => void;
+  calculateConsumption: () => void;
 }
 
 export function useWorkspace(session: Session): WorkspaceApi {
@@ -815,6 +838,70 @@ export function useWorkspace(session: Session): WorkspaceApi {
     [currentFile, selectedId, flash],
   );
 
+  // ── Consumption (fuel) ────────────────────────────────────────────────
+  const [showFuelSetup, setShowFuelSetup] = useState(false);
+  const [showReport, setShowReport] = useState(false);
+  // View-only calculation result (nothing persisted) — dropped on selection change.
+  const [transientConsumption, setTransientConsumption] = useState<VoyageConsumption | null>(null);
+  useEffect(() => {
+    setTransientConsumption(null);
+    setShowReport(false);
+  }, [selectedFile, selectedId]);
+
+  const consumptionDefaults = currentFile?.consumptionDefaults ?? DEFAULT_CONSUMPTION_SETTINGS;
+
+  // Defaults live on the FILE (ship level) — gated like createFile, not by the
+  // per-voyage lock.
+  const setConsumptionDefaults = useCallback(
+    (s: ConsumptionSettings) => {
+      if (!canEdit || !editAuthorized || !selectedFile) return;
+      setFiles((prev) =>
+        prev.map((f) => (f.name === selectedFile ? { ...f, consumptionDefaults: s } : f)),
+      );
+      markDirty(selectedFile);
+    },
+    [canEdit, editAuthorized, selectedFile, markDirty],
+  );
+
+  const setVoyageOverrides = useCallback(
+    (o: ConsumptionOverrides | undefined) => {
+      if (!editable) return;
+      mutate((v) => {
+        if (o && Object.keys(o).length) v.consumptionOverrides = o;
+        else delete v.consumptionOverrides;
+      });
+    },
+    [editable, mutate],
+  );
+
+  const calculateConsumption = useCallback(() => {
+    const voyage = currentFile?.voyages[selectedId];
+    if (!voyage) return;
+    const resolved = resolveSettings(consumptionDefaults, voyage.consumptionOverrides);
+    const result = computeVoyageConsumption(voyage, resolved, { by: loggedBy });
+    if (editable) {
+      mutate((v) => {
+        v.consumption = result;
+        v.versions.unshift({ action: 'Consumption calculated', by: loggedBy, note: '', at: nowStamp() });
+      });
+      setTransientConsumption(null);
+      flash(`Consumption calculated · ${result.totals.totalMT.toFixed(1)} MT`);
+    } else {
+      setTransientConsumption(result); // view-only: report opens, nothing persisted
+    }
+    setShowReport(true);
+  }, [currentFile, selectedId, consumptionDefaults, editable, loggedBy, mutate, flash]);
+
+  const consumptionResult = transientConsumption ?? current?.consumption;
+
+  const consumptionStale = useMemo(() => {
+    if (!current || !consumptionResult) return false;
+    // Compare against the LIVE resolved settings + legs: an edit to the legs,
+    // the overrides, or the file defaults all surface as "stale".
+    const resolved = resolveSettings(consumptionDefaults, current.consumptionOverrides);
+    return consumptionSignature(current, resolved) !== consumptionResult.inputSignature;
+  }, [current, consumptionResult, consumptionDefaults]);
+
   return {
     dirName,
     lastDirName,
@@ -876,5 +963,15 @@ export function useWorkspace(session: Session): WorkspaceApi {
     cancelPaste,
     doSaveJson,
     doExportExcel,
+    consumptionDefaults,
+    consumptionResult,
+    consumptionStale,
+    showFuelSetup,
+    showReport,
+    setShowFuelSetup,
+    setShowReport,
+    setConsumptionDefaults,
+    setVoyageOverrides,
+    calculateConsumption,
   };
 }
