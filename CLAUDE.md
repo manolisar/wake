@@ -1,13 +1,16 @@
-# Voyage Speed Tracker — Project Charter
+# Speed Planner SL — Project Charter
 
-> Speed & time planner for the **Solstice-class fleet** (5 ships). Rebuilt from a Claude Design
-> artifact (`Voyage Speed Tracker.dc.html`) into a production React/TS SPA. Same engineering
-> philosophy as `~/Projects/Voyage_Tracker_v8`: static, no backend, JSON is the record.
+> Speed, time **and fuel-consumption** planner for the **Solstice-class fleet** (5 ships). Combined
+> project: the voyage grid/workspace of `~/Projects/voyage-speed-template` (Speed Templates) merged
+> with the consumption engine and parameter surface of `~/Projects/voyage-planner` (SL Class Voyage
+> Planner). Both originals remain untouched. Same engineering philosophy as
+> `~/Projects/Voyage_Tracker_v8`: static, no backend, JSON is the record.
 
 ## 1. What this app is
 
 A static SPA that plans each voyage's legs and solves the **speed ↔ ETA/time** relationship over
-every passage. A port leg's passage runs from the **previous** port's **FAW** (Full Away) to this
+every passage, and — on the **Consumption** command — computes the voyage's fuel burn per leg and
+per fuel with the SL Class engine model (see §8). A port leg's passage runs from the **previous** port's **FAW** (Full Away) to this
 leg's arrival; all timestamps convert to absolute UTC minutes via each leg's **UTC offset**, so a
 mid-crossing timezone change is exact. Two solve directions per port leg:
 
@@ -136,5 +139,51 @@ NOT in the Excel file (the `.json` bundle is the lossless record; Excel is the o
 Import detects the ship from the title (e.g. "Celebrity Eclipse" → `EC`) and writes the imported
 voyages as a **new `.json` file in the folder** (`useWorkspace.doImportExcel` → `createWorkspaceFile`),
 then selects it. Round-trip is locked by `excel.test.ts` (exceljs build → SheetJS parse).
+
+The consumption fields (`stbyArrPowerMW`/`stbyDepPowerMW` on legs, `consumptionOverrides`/
+`consumption` on voyages, `consumptionDefaults` on the bundle) join `stbyArrDist` in the
+**app-only** bucket: kept in the `.json` record, intentionally NOT in the Excel file.
+
+## 8. Consumption model (`src/domain/consumption/`)
+
+The SL Class engine, ported verbatim from `~/Projects/voyage-planner` (4 × Wärtsilä 16V46,
+`NOMINAL_KW = 16800`; DG3 MGO-locked — no HFO bunker line; DG4 open-loop scrubber only):
+
+- `trialData.ts` — FAT curves (speed → prop kW, load fraction → SFOC g/kWh).
+- `interpolation.ts` / `loadSharing.ts` / `consumption.ts` — speed + engines + settings →
+  `CalculationResult` (per-fuel t/h, per-DG loads, overload flags); `computeStaticConsumption`
+  (fixed power) and `computePortConsumption` (hotel DGs + fixed MGO boiler 0.18 t/h);
+  `closeLoopEngines` forces DG4 HFO→MGO for close-loop waters. Load limits HFO/LSFO 0.8, MGO 0.7;
+  selection priority HFO → LSFO → MGO; min 2 DGs at speed.
+- `blend.ts` — a leg's `openLoop` hours split it into pure-open / 2 h changeover (50/50 blend) /
+  pure-close portions (extracted from the SL planner's SeaLegPlanner).
+- `settings.ts` — `resolveSettings(defaults, overrides)`: **ship defaults live on the bundle file**
+  (`consumptionDefaults`), **per-voyage overrides on the voyage** (`consumptionOverrides`); merged,
+  clamped to `SETTING_RANGES`, illegal fuels corrected. Tolerant normalizers for bundle parsing.
+- `voyageConsumption.ts` — `computeVoyageConsumption(voyage, settings)` maps `computeVoyage`'s leg
+  views onto the engine. Per port call: **Sea passage** (passage hours × blended open/close rates at
+  the solved or target speed), **St/By arrival/departure** (power = per-leg MW override, else
+  speed-derived `interpPropPower(stbySpeed) + maneuverAuxKW + hotelLoad` when a St/By distance
+  exists, else the `stby.avgPowerMW` fallback), **Port stay** (hotel DGs + boiler). Produces the
+  `VoyageConsumption` snapshot: resolved settings, per-leg phases with DG breakdowns, totals by
+  fuel, warnings, and an `inputSignature` used to flag the report **stale** when legs/parameters
+  change after a run.
+
+**`maneuverAuxKW` (default 2000 kW)** is a domain assumption: at 3–8 kn the trial curve gives only
+~1.5–3.6 MW of propulsion, but real maneuvering burns thruster/steering power the curve can't see.
+It is visible and editable in Fuel Setup — Chief Engineer to validate.
+
+UI: **Fuel Setup** (`ConsumptionSettingsModal`, ship-defaults + this-voyage tabs with override
+pills) and **Consumption** (runs the calc; in edit mode the snapshot + a version entry persist to
+the voyage, in view mode the report opens transiently). `ConsumptionReport` is the only results
+surface (no legs-table columns / summary cards / Excel changes); its per-leg St/By MW inputs are
+the one edit affordance. Fuel colors are stable: HFO orange, MGO green, LSFO indigo.
+
+**Bundle v2**: `parseBundle` accepts v1 (consumption fields absent) and v2; always writes v2. The
+snapshot's numbers are trusted on read, its envelope validated — garbage blobs drop, never crash.
+
+The engine is golden-locked: `consumption.test.ts` pins rates captured from the reference engine in
+`~/Projects/voyage-planner` for identical inputs. If numbers must change, change them there first
+or document the divergence.
 
 *Last updated: 2026-06-26.*

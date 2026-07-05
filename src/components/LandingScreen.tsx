@@ -35,7 +35,7 @@ export function LandingScreen({ initial, onDone }: { initial: Session | null; on
             <CompassIcon size={17} />
           </span>
           <div>
-            <div className="text-[0.95rem] font-extrabold leading-tight tracking-tight">Speed Templates</div>
+            <div className="text-[0.95rem] font-extrabold leading-tight tracking-tight">Speed Planner SL</div>
             <div className="font-mono text-[0.6rem] uppercase tracking-[1px] text-faint">
               Solstice-class fleet · sign in
             </div>
