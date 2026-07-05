@@ -17,6 +17,8 @@ import { MathExplainer } from './components/MathExplainer';
 import { UnlockModal } from './components/UnlockModal';
 import { EditPasswordModal } from './components/EditPasswordModal';
 import { PasteVoyageModal } from './components/PasteVoyageModal';
+import { ConsumptionSettingsModal } from './components/ConsumptionSettingsModal';
+import { ConsumptionReport } from './components/ConsumptionReport';
 import { Toast } from './components/Toast';
 
 function Workspace({
@@ -106,6 +108,9 @@ function Workspace({
         editing={w.editable}
         voyageTotal={total}
         exportMenu={w.exportMenu}
+        hasVoyage={!!w.current}
+        onFuelSetup={() => w.setShowFuelSetup(true)}
+        onCalculate={w.calculateConsumption}
         onImportExcel={w.doImportExcel}
         onToggleExportMenu={() => w.setExportMenu(!w.exportMenu)}
         onCloseExportMenu={() => w.setExportMenu(false)}
@@ -213,6 +218,30 @@ function Workspace({
           onNote={w.setUnlockNote}
           onConfirm={w.confirmUnlock}
           onCancel={w.cancelUnlock}
+        />
+      )}
+      {w.showFuelSetup && (
+        <ConsumptionSettingsModal
+          defaults={w.consumptionDefaults}
+          overrides={w.current?.consumptionOverrides}
+          canEditDefaults={w.canEdit && w.editAuthorized && !!w.selectedFile}
+          canEditVoyage={w.editable}
+          hasVoyage={!!w.current}
+          onSaveDefaults={w.setConsumptionDefaults}
+          onSaveOverrides={w.setVoyageOverrides}
+          onClose={() => w.setShowFuelSetup(false)}
+        />
+      )}
+      {w.showReport && w.current && w.consumptionResult && (
+        <ConsumptionReport
+          voyage={w.current}
+          consumption={w.consumptionResult}
+          stale={w.consumptionStale}
+          transient={!w.current.consumption || w.current.consumption !== w.consumptionResult}
+          editable={w.editable}
+          onSetLegField={w.updateLeg}
+          onRecalculate={w.calculateConsumption}
+          onClose={() => w.setShowReport(false)}
         />
       )}
       {w.pasteState && (

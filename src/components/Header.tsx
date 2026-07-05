@@ -15,6 +15,8 @@ import {
   EditIcon,
   PaletteIcon,
   CheckIcon,
+  GaugeIcon,
+  BoltIcon,
 } from './Icons';
 
 interface Props {
@@ -27,6 +29,7 @@ interface Props {
   editing: boolean;
   voyageTotal: number; // voyages in the current file
   exportMenu: boolean;
+  hasVoyage: boolean; // a voyage is selected → consumption can run
   onImportExcel: () => void;
   onToggleExportMenu: () => void;
   onCloseExportMenu: () => void;
@@ -35,6 +38,8 @@ interface Props {
   onOpenFolder: () => void;
   onToggleLock: () => void;
   onSignOut: () => void;
+  onFuelSetup: () => void;
+  onCalculate: () => void;
   theme: Theme;
   onSetTheme: (t: Theme) => void;
 }
@@ -49,6 +54,7 @@ export function Header({
   editing,
   voyageTotal,
   exportMenu,
+  hasVoyage,
   onImportExcel,
   onToggleExportMenu,
   onCloseExportMenu,
@@ -57,6 +63,8 @@ export function Header({
   onOpenFolder,
   onToggleLock,
   onSignOut,
+  onFuelSetup,
+  onCalculate,
   theme,
   onSetTheme,
 }: Props) {
@@ -161,6 +169,23 @@ export function Header({
       >
         {!canEdit ? 'VIEW ONLY · MARINE' : editing ? 'EDIT MODE' : 'VIEW ONLY'}
       </span>
+
+      <button
+        onClick={onFuelSetup}
+        className={iconBtn}
+        title="Consumption parameters — ship defaults & per-voyage overrides"
+        disabled={!dirName}
+      >
+        <GaugeIcon size={13} /> Fuel Setup
+      </button>
+      <button
+        onClick={onCalculate}
+        className="inline-flex flex-shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg bg-navy px-3.5 py-2 text-[0.75rem] font-semibold text-white hover:brightness-110 disabled:opacity-40"
+        title={hasVoyage ? 'Calculate fuel consumption for this voyage' : 'Select a voyage first'}
+        disabled={!hasVoyage}
+      >
+        <BoltIcon size={13} /> Consumption
+      </button>
 
       {canImport && (
         <button onClick={onImportExcel} className={iconBtn} title="Import an Excel (.xlsx) template as a new file in the folder">

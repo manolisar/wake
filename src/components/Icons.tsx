@@ -194,3 +194,16 @@ export const PaletteIcon = (p: IconProps) => (
     <circle cx="16.5" cy="10.5" r="1" />
   </svg>
 );
+
+export const GaugeIcon = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M12 15l3.5-3.5" />
+    <path d="M20.3 18a10 10 0 1 0-16.6 0" />
+  </svg>
+);
+
+export const BoltIcon = (p: IconProps) => (
+  <svg {...base(p)}>
+    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+  </svg>
+);
