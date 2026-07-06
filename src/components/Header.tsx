@@ -2,6 +2,7 @@
 // XLSX export, and the Enable Edit / Lock toggle. The chosen folder is the live
 // record; Save flushes the current file's edits to disk immediately.
 import { useEffect, useRef, useState } from 'react';
+import { APP_NAME, APP_VERSION } from '../appMeta';
 import type { XlsxScope } from '../storage/excel';
 import { THEMES, type Theme } from '../hooks/useTheme';
 import {
@@ -88,7 +89,7 @@ export function Header({
       </span>
       <div className="min-w-0">
         <div className="truncate text-[0.95rem] font-extrabold leading-tight tracking-[-0.2px]">
-          Speed Planner SL{' '}
+          {APP_NAME} <span className="align-middle text-[0.62rem] font-semibold text-faint">v{APP_VERSION}</span>{' '}
           {fileName && <span className="font-medium opacity-65">— {fileName}</span>}
         </div>
         <div className="truncate font-mono text-[0.6rem] uppercase tracking-[1px] text-faint">

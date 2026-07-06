@@ -1,10 +1,14 @@
-# Speed Planner SL — Project Charter
+# Wake — Project Charter
 
 > Speed, time **and fuel-consumption** planner for the **Solstice-class fleet** (5 ships). Combined
 > project: the voyage grid/workspace of `~/Projects/voyage-speed-template` (Speed Templates) merged
 > with the consumption engine and parameter surface of `~/Projects/voyage-planner` (SL Class Voyage
 > Planner). Both originals remain untouched. Same engineering philosophy as
 > `~/Projects/Voyage_Tracker_v8`: static, no backend, JSON is the record.
+
+**Naming:** the product is **Wake** (renamed from "Speed Planner SL", 2026-07-06). Display name and
+version live in `src/appMeta.ts` (shown greyed next to the wordmark). The bundle `APP_ID` stays
+`'voyage-speed-planner-sl'` deliberately — it is stamped inside saved `.json` files.
 
 ## 1. What this app is
 

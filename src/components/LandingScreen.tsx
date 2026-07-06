@@ -2,6 +2,7 @@
 // holds the .json files (FolderGate) and opens read-only; the daily password is
 // requested only when editing. Name + role are stamped on every committed change.
 import { useRef, useState, type FormEvent } from 'react';
+import { APP_NAME, APP_VERSION } from '../appMeta';
 import type { Role, Session } from '../types';
 import { ROLES, roleCanEdit } from '../domain/roles';
 import { CompassIcon } from './Icons';
@@ -35,7 +36,9 @@ export function LandingScreen({ initial, onDone }: { initial: Session | null; on
             <CompassIcon size={17} />
           </span>
           <div>
-            <div className="text-[0.95rem] font-extrabold leading-tight tracking-tight">Speed Planner SL</div>
+            <div className="text-[0.95rem] font-extrabold leading-tight tracking-tight">
+              {APP_NAME} <span className="align-middle text-[0.62rem] font-semibold text-faint">v{APP_VERSION}</span>
+            </div>
             <div className="font-mono text-[0.6rem] uppercase tracking-[1px] text-faint">
               Solstice-class fleet · sign in
             </div>

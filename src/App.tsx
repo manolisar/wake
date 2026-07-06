@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { APP_NAME } from './appMeta';
 import type { Session } from './types';
 import { useSession } from './hooks/useSession';
 import { useTheme, type Theme } from './hooks/useTheme';
@@ -95,7 +96,7 @@ function Workspace({
         Skip to content
       </a>
       <h1 className="sr-only">
-        Speed Planner SL — {w.selectedFile || 'no file'}
+        {APP_NAME} — {w.selectedFile || 'no file'}
         {w.current ? `, ${w.current.title}` : ''}
       </h1>
       <Header

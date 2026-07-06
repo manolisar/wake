@@ -32,7 +32,7 @@ interface FSAccessWindow {
   }) => Promise<FileHandle[]>;
 }
 
-const JSON_TYPES = [{ description: 'Speed Templates JSON', accept: { 'application/json': ['.json'] } }];
+const JSON_TYPES = [{ description: 'Wake templates JSON', accept: { 'application/json': ['.json'] } }];
 
 function suggestedName(ship: ShipCode): string {
   return `${ship}_speed-template_${new Date().toISOString().slice(0, 10)}.json`;

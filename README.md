@@ -1,6 +1,6 @@
-# Speed Planner SL
+# Wake
 
-A static, single-page **speed & time planner** for the **Solstice-class fleet** (5 ships).
+A static, single-page **speed, time & fuel-consumption planner** for the **Solstice-class fleet** (5 ships).
 Each voyage is a list of legs (port calls, at-sea days, tender/anchorage calls); the app solves
 the **speed ↔ ETA/time** relationship over each passage using the time since the previous port's
 **FAW** (Full Away) and per-leg **UTC offsets**, so timezone changes across a crossing are exact.

@@ -1,4 +1,4 @@
-# Voyage Speed Tracker — Project Charter
+# Wake — Project Charter
 
 > Speed & time planner for the **Solstice-class fleet** (5 ships). Rebuilt from a Codex Design
 > artifact (`Voyage Speed Tracker.dc.html`) into a production React/TS SPA. Same engineering

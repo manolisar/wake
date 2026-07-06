@@ -30,7 +30,7 @@ export function FolderGate({
         </div>
         <div className="px-5 py-5">
           <p className="text-[0.78rem] leading-relaxed text-muted">
-            Pick the folder that holds your Speed Templates <span className="font-mono">.json</span> files. Every file is
+            Pick the folder that holds your Wake template <span className="font-mono">.json</span> files. Every file is
             opened into a tree of voyages. Edits and pasted voyages are written straight back into the folder — it is the
             live record.
           </p>
