@@ -14,6 +14,7 @@ type FSPermissionState = 'granted' | 'denied' | 'prompt';
 interface Writable {
   write: (data: string) => Promise<void>;
   close: () => Promise<void>;
+  abort?: (reason?: unknown) => Promise<void>;
 }
 export interface WFileHandle {
   readonly kind: 'file';
@@ -74,7 +75,11 @@ async function ensureWritable(dir: WDirHandle): Promise<boolean> {
 
 /** Read + parse every .json in the folder, sorted chronologically by file. */
 export async function readWorkspace(dir: WDirHandle): Promise<WorkspaceLoad> {
-  await ensureWritable(dir);
+  // The folder is the live record — opening without write access would let the
+  // operator edit and only discover at save time that nothing persists.
+  if (!(await ensureWritable(dir))) {
+    throw new Error('write permission was denied. Allow read & write access to the folder and try again');
+  }
   const files: WorkspaceFile[] = [];
   const handles = new Map<string, WFileHandle>();
 
@@ -111,8 +116,19 @@ function bundleFor(file: WorkspaceFile): Bundle {
 /** Write a file's voyages back to its handle in place. */
 export async function writeWorkspaceFile(handle: WFileHandle, file: WorkspaceFile): Promise<void> {
   const writable = await handle.createWritable();
-  await writable.write(JSON.stringify(bundleFor(file), null, 2));
-  await writable.close();
+  try {
+    await writable.write(JSON.stringify(bundleFor(file), null, 2));
+    await writable.close();
+  } catch (e) {
+    // Discard the swap file so a failed save leaves no dangling stream and the
+    // original on disk stays untouched.
+    try {
+      await writable.abort?.();
+    } catch {
+      /* stream already dead */
+    }
+    throw e;
+  }
 }
 
 /** Create a brand-new .json in the folder (deduping the name) and return its handle + entry. */

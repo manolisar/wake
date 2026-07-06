@@ -161,7 +161,9 @@ function Workspace({
 
         <main id="main-content" tabIndex={-1} className="vt-scroll min-w-0 flex-1 overflow-auto bg-bg outline-none">
           {w.current ? (
-            <div className="flex min-w-[1180px] flex-col gap-5 px-6 py-6">
+            // No fixed min width: header, tabs and summary cards wrap to the
+            // viewport; the legs table scrolls inside its own container.
+            <div className="flex flex-col gap-5 px-6 py-6">
               <CruiseCard voyage={w.current} fileName={w.selectedFile} editable={w.editable} onTitle={w.setTitle} onNumber={w.setNumber} />
 
               {/* Main tabs: the ports/times grid vs the voyage's fuel consumption */}
@@ -312,12 +314,16 @@ function SignedIn({
   const w = useWorkspace(session);
   if (!w.dirName) {
     return (
-      <FolderGate
-        userLabel={`${session.name} · ${roleLabel(session.role)}`}
-        lastDirName={w.lastDirName}
-        onChoose={w.openFolder}
-        onReopen={w.reopenLast}
-      />
+      <>
+        <FolderGate
+          userLabel={`${session.name} · ${roleLabel(session.role)}`}
+          lastDirName={w.lastDirName}
+          onChoose={w.openFolder}
+          onReopen={w.reopenLast}
+        />
+        {/* Folder-open failures (denied permission, unreadable dir) flash here */}
+        <Toast message={w.toast} />
+      </>
     );
   }
   return <Workspace w={w} onSignOut={onSignOut} theme={theme} onSetTheme={onSetTheme} />;

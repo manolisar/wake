@@ -510,7 +510,6 @@ function RemarksCell({
 
   useLayoutEffect(() => {
     if (open) place();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   useEffect(() => {
@@ -526,7 +525,6 @@ function RemarksCell({
       window.removeEventListener('scroll', close, true);
       window.removeEventListener('keydown', onKey);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   return (

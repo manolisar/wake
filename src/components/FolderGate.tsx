@@ -47,7 +47,7 @@ export function FolderGate({
               onClick={onReopen}
               disabled={!ok}
               title={`Reopen ${lastDirName}`}
-              className="inline-flex items-center gap-2 rounded-lg bg-cyan px-4 py-2 text-[0.8rem] font-semibold text-white hover:brightness-95 disabled:opacity-50"
+              className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-cyan px-4 py-2 text-[0.8rem] font-semibold text-white hover:brightness-95 disabled:opacity-50"
             >
               <FolderIcon size={14} /> Reopen{' '}
               <span className="max-w-[150px] truncate font-mono text-[0.72rem] opacity-90">{lastDirName}</span>
@@ -59,8 +59,8 @@ export function FolderGate({
             disabled={!ok}
             className={
               lastDirName
-                ? 'inline-flex items-center gap-2 rounded-lg border border-line bg-surface px-4 py-2 text-[0.8rem] font-semibold text-ink hover:bg-rail disabled:opacity-50'
-                : 'inline-flex items-center gap-2 rounded-lg bg-cyan px-4 py-2 text-[0.8rem] font-semibold text-white hover:brightness-95 disabled:opacity-50'
+                ? 'inline-flex min-h-11 items-center gap-2 rounded-lg border border-line bg-surface px-4 py-2 text-[0.8rem] font-semibold text-ink hover:bg-rail disabled:opacity-50'
+                : 'inline-flex min-h-11 items-center gap-2 rounded-lg bg-cyan px-4 py-2 text-[0.8rem] font-semibold text-white hover:brightness-95 disabled:opacity-50'
             }
           >
             <FolderIcon size={14} /> {lastDirName ? 'Choose another folder…' : 'Choose folder…'}

@@ -178,6 +178,7 @@ export function useWorkspace(session: Session): WorkspaceApi {
   const filesRef = useRef<WorkspaceFile[]>(files);
   const dirtyRef = useRef<Set<string>>(new Set());
   const flushTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const inFlightRef = useRef(0); // disk writes currently awaiting resolution
   const clipboardRef = useRef<{ sourceFile: string; id: string } | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   // Per-voyage undo/redo history. Keyed by file::voyage so switching voyages
@@ -226,17 +227,22 @@ export function useWorkspace(session: Session): WorkspaceApi {
     const names = [...dirtyRef.current];
     dirtyRef.current.clear();
     const failed: string[] = [];
-    for (const name of names) {
-      const f = filesRef.current.find((x) => x.name === name);
-      const h = handlesRef.current.get(name);
-      if (f && h && !f.error) {
-        try {
-          await writeWorkspaceFile(h, f);
-        } catch {
-          dirtyRef.current.add(name); // retry on next flush
-          failed.push(name);
+    inFlightRef.current++;
+    try {
+      for (const name of names) {
+        const f = filesRef.current.find((x) => x.name === name);
+        const h = handlesRef.current.get(name);
+        if (f && h && !f.error) {
+          try {
+            await writeWorkspaceFile(h, f);
+          } catch {
+            dirtyRef.current.add(name); // retry on next flush
+            failed.push(name);
+          }
         }
       }
+    } finally {
+      inFlightRef.current--;
     }
     return failed;
   }, []);
@@ -254,6 +260,34 @@ export function useWorkspace(session: Session): WorkspaceApi {
     },
     [flushDirty],
   );
+
+  // The folder is the live record, but writes debounce ~1s — a tab closed in
+  // that window would silently drop the edit. Flush as soon as the tab hides
+  // (covers close/switch on modern Chromium) and keep the native leave prompt
+  // up while anything is still dirty or in flight.
+  useEffect(() => {
+    const flushNow = () => {
+      if (flushTimer.current) clearTimeout(flushTimer.current);
+      if (dirtyRef.current.size) void flushDirty();
+    };
+    const onHide = () => {
+      if (document.visibilityState === 'hidden') flushNow();
+    };
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (dirtyRef.current.size === 0 && inFlightRef.current === 0) return;
+      flushNow(); // completes if the user cancels the leave
+      e.preventDefault();
+      e.returnValue = ''; // legacy Chromium still needs this for the prompt
+    };
+    document.addEventListener('visibilitychange', onHide);
+    window.addEventListener('pagehide', flushNow);
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => {
+      document.removeEventListener('visibilitychange', onHide);
+      window.removeEventListener('pagehide', flushNow);
+      window.removeEventListener('beforeunload', onBeforeUnload);
+    };
+  }, [flushDirty]);
 
   // ── Folder open ───────────────────────────────────────────────────────
   // Offer "reopen last folder": the handle's .name reads without permission.
@@ -621,8 +655,18 @@ export function useWorkspace(session: Session): WorkspaceApi {
       setFiles((prev) => prev.map((f) => (f.name === fileName ? newFile : f)));
       if (selectedFile === fileName && selectedId === id) setSelectedId(newSel);
       const handle = handlesRef.current.get(fileName);
-      if (handle) writeWorkspaceFile(handle, newFile).catch(() => markDirty(fileName));
-      flash('Cruise deleted');
+      if (handle) {
+        inFlightRef.current++;
+        writeWorkspaceFile(handle, newFile)
+          .then(() => flash('Cruise deleted'))
+          .catch(() => {
+            markDirty(fileName);
+            flash(`Cruise deleted — couldn’t write ${fileName} yet, retrying`);
+          })
+          .finally(() => inFlightRef.current--);
+      } else {
+        flash('Cruise deleted');
+      }
     },
     [canEdit, editAuthorized, selectedFile, selectedId, markDirty, flash],
   );
@@ -769,8 +813,18 @@ export function useWorkspace(session: Session): WorkspaceApi {
     setPasteState(null);
 
     const handle = handlesRef.current.get(ps.targetFile);
-    if (handle) writeWorkspaceFile(handle, newFile).catch(() => markDirty(ps.targetFile));
-    flash(`Pasted into ${ps.targetFile}`);
+    if (handle) {
+      inFlightRef.current++;
+      writeWorkspaceFile(handle, newFile)
+        .then(() => flash(`Pasted into ${ps.targetFile}`))
+        .catch(() => {
+          markDirty(ps.targetFile);
+          flash(`Pasted — couldn’t write ${ps.targetFile} yet, retrying`);
+        })
+        .finally(() => inFlightRef.current--);
+    } else {
+      flash(`Pasted into ${ps.targetFile}`);
+    }
   }, [pasteState, loggedBy, markDirty, flash]);
 
   // ── Save / export ─────────────────────────────────────────────────────

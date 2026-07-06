@@ -57,7 +57,7 @@ export function LandingScreen({ initial, onDone }: { initial: Session | null; on
                 onChange={(e) => setName(e.target.value)}
                 aria-invalid={touched && !name.trim()}
                 placeholder="e.g. John Doe"
-                className="w-full rounded-lg border border-line bg-bg px-3 py-2 text-sm text-ink outline-none focus:border-cyan"
+                className="min-h-11 w-full rounded-lg border border-line bg-bg px-3 py-2 text-sm text-ink outline-none focus:border-cyan"
               />
               {touched && !name.trim() && (
                 <div role="alert" className="mt-1.5 text-[0.66rem] font-semibold text-pink">
@@ -74,7 +74,7 @@ export function LandingScreen({ initial, onDone }: { initial: Session | null; on
                 name="role"
                 value={role}
                 onChange={(e) => setRole(e.target.value as Role)}
-                className="w-full rounded-lg border border-line bg-bg px-3 py-2 text-sm text-ink outline-none focus:border-cyan"
+                className="min-h-11 w-full rounded-lg border border-line bg-bg px-3 py-2 text-sm text-ink outline-none focus:border-cyan"
               >
                 {ROLES.map((r) => (
                   <option key={r.value} value={r.value}>
@@ -97,7 +97,7 @@ export function LandingScreen({ initial, onDone }: { initial: Session | null; on
           <button
             type="submit"
             disabled={!ready}
-            className="rounded-lg bg-cyan px-4 py-2 text-[0.8rem] font-semibold text-white hover:brightness-95 disabled:opacity-50"
+            className="min-h-11 rounded-lg bg-cyan px-4 py-2 text-[0.8rem] font-semibold text-white hover:brightness-95 disabled:opacity-50"
           >
             Continue
           </button>
