@@ -28,6 +28,7 @@ interface Props {
   canEdit: boolean;
   canImport: boolean; // canEdit AND edit-authorised → Excel import allowed
   editing: boolean;
+  pendingSave: boolean; // edits queued for the debounced disk write
   voyageTotal: number; // voyages in the current file
   exportMenu: boolean;
   hasVoyage: boolean; // a voyage is selected → consumption can run
@@ -53,6 +54,7 @@ export function Header({
   canEdit,
   canImport,
   editing,
+  pendingSave,
   voyageTotal,
   exportMenu,
   hasVoyage,
@@ -209,11 +211,27 @@ export function Header({
       )}
       <button
         onClick={onSaveJson}
-        className={iconBtn}
-        title={fileName ? `Save ${fileName} to the folder now` : 'Nothing to save'}
+        className={`relative ${iconBtn}`}
+        title={
+          !fileName
+            ? 'Nothing to save'
+            : pendingSave
+              ? `Unsaved changes — writing to ${fileName} shortly. Click to save now`
+              : `Save ${fileName} to the folder now`
+        }
         disabled={!fileName}
       >
         <SaveIcon size={13} /> Save
+        {pendingSave && (
+          <span
+            aria-hidden="true"
+            className="absolute -right-[3px] -top-[3px] h-2 w-2 rounded-full border border-surface"
+            style={{ background: 'var(--color-amber-btn)' }}
+          />
+        )}
+        <span aria-live="polite" className="sr-only">
+          {pendingSave ? 'Unsaved changes' : ''}
+        </span>
       </button>
 
       <div className="relative">

@@ -107,6 +107,7 @@ function Workspace({
         canEdit={w.canEdit}
         canImport={w.canEdit && w.editAuthorized}
         editing={w.editable}
+        pendingSave={w.pendingSave}
         voyageTotal={total}
         exportMenu={w.exportMenu}
         hasVoyage={!!w.current}

@@ -88,6 +88,7 @@ export interface WorkspaceApi {
   search: string;
   expanded: Record<string, boolean>;
   toast: { msg: string; kind: 'success' | 'error' };
+  pendingSave: boolean; // edits queued for the debounced disk write
   exportMenu: boolean;
   showPassword: boolean;
   showUnlock: boolean;
@@ -168,6 +169,7 @@ export function useWorkspace(session: Session): WorkspaceApi {
   const [showUnlock, setShowUnlock] = useState(false);
   const [unlockNote, setUnlockNote] = useState('');
   const [toast, setToast] = useState<{ msg: string; kind: 'success' | 'error' }>({ msg: '', kind: 'success' });
+  const [pendingSave, setPendingSave] = useState(false);
   const [exportMenu, setExportMenu] = useState(false);
   const [clipboardCount, setClipboardCount] = useState(0);
   const [pasteState, setPasteState] = useState<PasteState | null>(null);
@@ -251,6 +253,7 @@ export function useWorkspace(session: Session): WorkspaceApi {
     } finally {
       inFlightRef.current--;
     }
+    setPendingSave(dirtyRef.current.size > 0); // failed files re-queue → stays pending
     return failed;
   }, []);
 
@@ -258,6 +261,7 @@ export function useWorkspace(session: Session): WorkspaceApi {
     (name: string, immediate = false) => {
       if (!name) return;
       dirtyRef.current.add(name);
+      setPendingSave(true);
       if (flushTimer.current) clearTimeout(flushTimer.current);
       if (immediate) {
         void flushDirty();
@@ -997,6 +1001,7 @@ export function useWorkspace(session: Session): WorkspaceApi {
     search,
     expanded,
     toast,
+    pendingSave,
     exportMenu,
     showPassword,
     showUnlock,
