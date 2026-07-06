@@ -273,17 +273,17 @@ export function ConsumptionReport({
           <table className="w-full border-collapse">
             <thead>
               <tr className="border-b border-line">
-                <th className="px-2 py-1.5 text-left font-mono text-[0.55rem] font-bold uppercase tracking-[1px] text-faint">
+                <th scope="col" className="px-2 py-1.5 text-left font-mono text-[0.55rem] font-bold uppercase tracking-[1px] text-faint">
                   Phase
                 </th>
-                <th className={th}>Hours</th>
-                <th className="px-2 py-1.5 text-left font-mono text-[0.55rem] font-bold uppercase tracking-[1px] text-faint">
+                <th scope="col" className={th}>Hours</th>
+                <th scope="col" className="px-2 py-1.5 text-left font-mono text-[0.55rem] font-bold uppercase tracking-[1px] text-faint">
                   Basis
                 </th>
-                <th className={th} style={{ color: FUEL_COLOR.HFO }}>HFO MT</th>
-                <th className={th} style={{ color: FUEL_COLOR.MGO }}>MGO MT</th>
-                <th className={th} style={{ color: FUEL_COLOR.LSFO }}>LSFO MT</th>
-                <th className={th}>Total MT</th>
+                <th scope="col" className={th} style={{ color: FUEL_COLOR.HFO }}>HFO MT</th>
+                <th scope="col" className={th} style={{ color: FUEL_COLOR.MGO }}>MGO MT</th>
+                <th scope="col" className={th} style={{ color: FUEL_COLOR.LSFO }}>LSFO MT</th>
+                <th scope="col" className={th}>Total MT</th>
               </tr>
             </thead>
             <tbody>
@@ -311,6 +311,8 @@ export function ConsumptionReport({
                             <button
                               type="button"
                               onClick={() => setOpenDg(openDg === lc.legIndex ? null : lc.legIndex)}
+                              aria-expanded={openDg === lc.legIndex}
+                              aria-label={`Diesel generator breakdown for ${lc.port || 'unnamed leg'}`}
                               className="ml-2 rounded border border-line px-1.5 py-[1px] font-mono text-[0.55rem] text-faint hover:bg-rail"
                             >
                               DG {openDg === lc.legIndex ? '▴' : '▾'}

@@ -82,6 +82,19 @@ export function Header({
     if (themeMenu) themeMenuRef.current?.querySelector('button')?.focus();
   }, [themeMenu]);
 
+  // ArrowUp/Down cycle focus through a menu's items (ARIA menu pattern).
+  const menuArrowNav = (e: React.KeyboardEvent<HTMLElement>) => {
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+    e.preventDefault();
+    const items = Array.from(
+      e.currentTarget.querySelectorAll<HTMLButtonElement>('[role^="menuitem"]'),
+    );
+    if (!items.length) return;
+    const i = items.indexOf(document.activeElement as HTMLButtonElement);
+    const next = e.key === 'ArrowDown' ? (i + 1) % items.length : (i - 1 + items.length) % items.length;
+    items[next].focus();
+  };
+
   return (
     <header className="z-[5] flex h-14 flex-shrink-0 items-center gap-3 border-b border-line bg-surface px-4">
       <span className="inline-flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-cyan text-white">
@@ -124,6 +137,7 @@ export function Header({
                 onClick={(e) => e.stopPropagation()}
                 onKeyDown={(e) => {
                   if (e.key === 'Escape') setThemeMenu(false);
+                  else menuArrowNav(e);
                 }}
                 className="vt-scale-in absolute right-0 top-[42px] min-w-[208px] overflow-hidden rounded-[10px] border border-line bg-surface p-1.5 shadow-[0_10px_40px_rgba(0,0,0,0.15)]"
               >
@@ -215,6 +229,7 @@ export function Header({
               onClick={(e) => e.stopPropagation()}
               onKeyDown={(e) => {
                 if (e.key === 'Escape') onCloseExportMenu();
+                else menuArrowNav(e);
               }}
               className="vt-scale-in absolute right-4 top-[58px] min-w-[218px] overflow-hidden rounded-[10px] border border-line bg-surface p-1.5 shadow-[0_10px_40px_rgba(0,0,0,0.15)]"
             >

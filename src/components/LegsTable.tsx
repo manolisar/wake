@@ -254,6 +254,7 @@ export function LegsTable(props: Props) {
         <table
           onKeyDown={onGridKey}
           onPaste={onPaste}
+          aria-label="Voyage legs"
           className="table-fixed border-separate border-spacing-0 text-[0.72rem]"
           style={{ minWidth: visibleWidth, width: visibleWidth }}
         >

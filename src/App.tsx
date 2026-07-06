@@ -151,6 +151,16 @@ function Workspace({
           role="separator"
           aria-orientation="vertical"
           aria-label="Resize sidebar"
+          aria-valuenow={sidebarW}
+          aria-valuemin={240}
+          aria-valuemax={640}
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+              e.preventDefault();
+              setSidebarW((w) => Math.min(640, Math.max(240, w + (e.key === 'ArrowLeft' ? -16 : 16))));
+            }
+          }}
           onPointerDown={(e) => {
             dragging.current = true;
             document.body.style.cursor = 'col-resize';
@@ -167,11 +177,29 @@ function Workspace({
             <div className="flex flex-col gap-5 px-6 py-6">
               <CruiseCard voyage={w.current} fileName={w.selectedFile} editable={w.editable} onTitle={w.setTitle} onNumber={w.setNumber} />
 
-              {/* Main tabs: the ports/times grid vs the voyage's fuel consumption */}
-              <div role="tablist" aria-label="Voyage views" className="flex gap-1.5">
+              {/* Main tabs: the ports/times grid vs the voyage's fuel consumption.
+                  Full ARIA tabs pattern: roving tabIndex + ArrowLeft/Right. */}
+              <div
+                role="tablist"
+                aria-label="Voyage views"
+                className="flex gap-1.5"
+                onKeyDown={(e) => {
+                  if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    const next = !w.showReport;
+                    w.setShowReport(next);
+                    requestAnimationFrame(() =>
+                      document.getElementById(next ? 'vst-tab-fuel' : 'vst-tab-grid')?.focus(),
+                    );
+                  }
+                }}
+              >
                 <button
+                  id="vst-tab-grid"
                   role="tab"
                   aria-selected={!w.showReport}
+                  aria-controls="vst-panel-grid"
+                  tabIndex={!w.showReport ? 0 : -1}
                   onClick={() => w.setShowReport(false)}
                   className={
                     'rounded-lg px-4 py-2 text-[0.78rem] font-bold ' +
@@ -181,8 +209,11 @@ function Workspace({
                   Ports &amp; Times
                 </button>
                 <button
+                  id="vst-tab-fuel"
                   role="tab"
                   aria-selected={w.showReport}
+                  aria-controls="vst-panel-fuel"
+                  tabIndex={w.showReport ? 0 : -1}
                   onClick={() => w.setShowReport(true)}
                   className={
                     'rounded-lg px-4 py-2 text-[0.78rem] font-bold ' +
@@ -201,7 +232,7 @@ function Workspace({
               </div>
 
               {!w.showReport ? (
-                <>
+                <div id="vst-panel-grid" role="tabpanel" aria-labelledby="vst-tab-grid" className="flex flex-col gap-5">
                   <SummaryCards summary={summary} />
                   <LegsTable
                     voyage={w.current}
@@ -221,17 +252,19 @@ function Workspace({
                     <VersionHistory versions={w.current.versions} />
                     <MathExplainer />
                   </section>
-                </>
+                </div>
               ) : (
-                <ConsumptionReport
-                  voyage={w.current}
-                  consumption={w.consumptionResult}
-                  stale={w.consumptionStale}
-                  transient={!!w.consumptionResult && w.current.consumption !== w.consumptionResult}
-                  editable={w.editable}
-                  onSetLegField={w.updateLeg}
-                  onRecalculate={w.calculateConsumption}
-                />
+                <div id="vst-panel-fuel" role="tabpanel" aria-labelledby="vst-tab-fuel">
+                  <ConsumptionReport
+                    voyage={w.current}
+                    consumption={w.consumptionResult}
+                    stale={w.consumptionStale}
+                    transient={!!w.consumptionResult && w.current.consumption !== w.consumptionResult}
+                    editable={w.editable}
+                    onSetLegField={w.updateLeg}
+                    onRecalculate={w.calculateConsumption}
+                  />
+                </div>
               )}
             </div>
           ) : (
