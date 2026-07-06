@@ -225,6 +225,52 @@ td:focus-within .vt-fill-handle,
   opacity: 1;
 }
 
+/* ── Print: the main content (legs grid or consumption report) becomes the
+   document. App chrome disappears and the structural tokens are forced light
+   so Bridge Console prints on white. Landscape recommended for the grid. */
+@media print {
+  :root,
+  :root[data-theme='admiralty'],
+  :root[data-theme='console'] {
+    color-scheme: light;
+    --color-bg: #ffffff;
+    --color-surface: #ffffff;
+    --color-rail: #f3f5f9;
+    --color-ink: #1a2233;
+    --color-muted: #6b7b8f;
+    --color-faint: #6b7689;
+    --color-line: #c9d2de;
+    --color-warn-bg: #fffbeb;
+    --color-warn-border: #fde68a;
+    --color-spd-hi-fg: #b91c1c;
+    --color-spd-lo-fg: #7c3aed;
+    --color-spd-ok-fg: #047857;
+  }
+  header,
+  aside,
+  .skip-link,
+  [role='separator'],
+  [role='tablist'],
+  .vt-no-print {
+    display: none !important;
+  }
+  html,
+  body {
+    overflow: visible;
+    height: auto;
+  }
+  #root {
+    height: auto;
+  }
+  main,
+  .vt-scroll {
+    overflow: visible !important;
+  }
+  * {
+    box-shadow: none !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.01ms !important;

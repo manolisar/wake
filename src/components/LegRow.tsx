@@ -418,7 +418,7 @@ function LegRowImpl({
           when the table is scrolled. Opaque bg + left separator/shadow mirror
           the frozen-left block. */}
       <td
-        className="whitespace-nowrap border-b border-line px-1.5 py-[3px] text-center"
+        className="vt-no-print whitespace-nowrap border-b border-line px-1.5 py-[3px] text-center"
         style={{
           position: 'sticky',
           right: 0,

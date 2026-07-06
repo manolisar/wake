@@ -194,7 +194,7 @@ export function LegsTable(props: Props) {
 
   return (
     <section>
-      <div className="mb-2.5 flex flex-wrap items-center justify-between gap-4">
+      <div className="vt-no-print mb-2.5 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <span className="text-[0.55rem] font-bold uppercase tracking-[1.5px] text-faint">
             Legs · {legs.length} stops
@@ -276,7 +276,7 @@ export function LegsTable(props: Props) {
                     scope="col"
                     className={`sticky top-0 border-b border-r border-line bg-rail px-2 py-2 align-bottom text-[0.5rem] font-bold uppercase tracking-[1.1px] text-faint ${
                       wrap ? 'leading-tight' : 'whitespace-nowrap'
-                    } ${isFrozen || isActions ? 'z-30' : 'z-20'}`}
+                    } ${isFrozen || isActions ? 'z-30' : 'z-20'} ${isActions ? 'vt-no-print' : ''}`}
                     style={{
                       textAlign: align as 'left' | 'right' | 'center',
                       // Match the body's left-edge separators (see LegRow) so the

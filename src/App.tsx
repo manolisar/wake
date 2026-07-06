@@ -249,7 +249,7 @@ function Workspace({
                     onAdd={w.addLeg}
                     onFill={w.fillDown}
                   />
-                  <section className="grid grid-cols-[1.4fr_1fr] gap-4">
+                  <section className="vt-no-print grid grid-cols-[1.4fr_1fr] gap-4">
                     <VersionHistory versions={w.current.versions} />
                     <MathExplainer />
                   </section>

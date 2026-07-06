@@ -11,7 +11,7 @@ export function Toast({ message, kind = 'success' }: { message: string; kind?: T
     <div
       role={error ? 'alert' : 'status'}
       aria-live={error ? 'assertive' : 'polite'}
-      className="pointer-events-none fixed bottom-[22px] left-1/2 z-[60] -translate-x-1/2"
+      className="vt-no-print pointer-events-none fixed bottom-[22px] left-1/2 z-[60] -translate-x-1/2"
     >
       {message && (
         <div
