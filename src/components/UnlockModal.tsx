@@ -1,5 +1,6 @@
 // Unlock-reason modal — the reason is recorded to the voyage's version history.
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
+import { useModalDialog } from '../hooks/useModalDialog';
 import { LockOpenIcon } from './Icons';
 
 interface Props {
@@ -13,35 +14,7 @@ interface Props {
 export function UnlockModal({ loggedBy, note, onNote, onConfirm, onCancel }: Props) {
   const dialogRef = useRef<HTMLDivElement>(null);
 
-  // Escape to close, Tab trapped within the dialog, focus returned on close.
-  useEffect(() => {
-    const prev = document.activeElement as HTMLElement | null;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onCancel();
-        return;
-      }
-      if (e.key !== 'Tab' || !dialogRef.current) return;
-      const f = dialogRef.current.querySelectorAll<HTMLElement>(
-        'button, [href], input, textarea, select, [tabindex]:not([tabindex="-1"])',
-      );
-      if (!f.length) return;
-      const first = f[0];
-      const last = f[f.length - 1];
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault();
-        first.focus();
-      }
-    };
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      prev?.focus?.();
-    };
-  }, [onCancel]);
+  useModalDialog(dialogRef, onCancel);
 
   return (
     <div

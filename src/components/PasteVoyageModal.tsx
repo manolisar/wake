@@ -1,7 +1,8 @@
 // Paste-voyage dialog — edit the new voyage's name and start date before it is
 // cloned into the target file. Changing the start date shifts every dated leg by
 // the same offset (times are kept).
-import { useEffect, useRef, type FormEvent } from 'react';
+import { useRef, type FormEvent } from 'react';
+import { useModalDialog } from '../hooks/useModalDialog';
 import { PasteIcon } from './Icons';
 
 interface Props {
@@ -17,17 +18,7 @@ interface Props {
 export function PasteVoyageModal({ targetFile, name, startDate, onName, onDate, onConfirm, onCancel }: Props) {
   const ref = useRef<HTMLFormElement>(null);
 
-  useEffect(() => {
-    const prev = document.activeElement as HTMLElement | null;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onCancel();
-    };
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      prev?.focus?.();
-    };
-  }, [onCancel]);
+  useModalDialog(ref, onCancel);
 
   const submit = (e: FormEvent) => {
     e.preventDefault();

@@ -1,7 +1,8 @@
 // Fuel Setup — the full parameter surface of the SL consumption model, in two
 // tabs: SHIP DEFAULTS (stored on the current .json file) and THIS VOYAGE
 // (overrides stored on the voyage; anything untouched follows the defaults).
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
+import { useModalDialog } from '../hooks/useModalDialog';
 import type {
   ConsumptionOverrides,
   ConsumptionSettings,
@@ -72,18 +73,19 @@ export function ConsumptionSettingsModal({
     structuredClone(overrides ?? {}),
   );
   const dialogRef = useRef<HTMLDivElement>(null);
+  const [unsavedHint, setUnsavedHint] = useState(false);
 
-  useEffect(() => {
-    const prev = document.activeElement as HTMLElement | null;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      prev?.focus?.();
-    };
-  }, [onClose]);
+  // Backdrop click / Escape must not silently discard edits: while the drafts
+  // differ from what was passed in, they show a hint instead of closing.
+  // Cancel and Save always close.
+  const dirty =
+    JSON.stringify(draftDefaults) !== JSON.stringify(defaults) ||
+    JSON.stringify(draftOverrides) !== JSON.stringify(overrides ?? {});
+  const attemptClose = () => {
+    if (dirty) setUnsavedHint(true);
+    else onClose();
+  };
+  useModalDialog(dialogRef, attemptClose);
 
   const onDefaults = tab === 'defaults';
   const canEditTab = onDefaults ? canEditDefaults : canEditVoyage;
@@ -151,7 +153,7 @@ export function ConsumptionSettingsModal({
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(10,25,41,0.45)] backdrop-blur-[4px]"
-      onClick={onClose}
+      onClick={attemptClose}
     >
       <div
         ref={dialogRef}
@@ -398,10 +400,14 @@ export function ConsumptionSettingsModal({
         </div>
 
         <div className="flex items-center gap-2 border-t border-line px-5 py-3.5">
-          <div className="flex-1 text-[0.6rem] text-faint">
-            {onDefaults
-              ? 'Saved to this .json file — applies to every voyage in it unless overridden.'
-              : 'Saved on the voyage. The exact settings used are snapshotted with each calculation.'}
+          <div className="flex-1 text-[0.6rem] text-faint" aria-live="polite">
+            {unsavedHint && dirty ? (
+              <span className="font-semibold text-amber">Unsaved changes — Save or Cancel.</span>
+            ) : onDefaults ? (
+              'Saved to this .json file — applies to every voyage in it unless overridden.'
+            ) : (
+              'Saved on the voyage. The exact settings used are snapshotted with each calculation.'
+            )}
           </div>
           <button
             onClick={onClose}

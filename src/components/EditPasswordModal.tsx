@@ -3,7 +3,8 @@
 // — see domain/password.ts). On success the session is marked edit-authorised
 // (sessionStorage, keyed by today's date) so it is asked at most once per day.
 // This is a convenience gate, not real security (shared keyword, public date).
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useRef, useState, type FormEvent } from 'react';
+import { useModalDialog } from '../hooks/useModalDialog';
 import { checkPassword } from '../domain/password';
 import { LockIcon } from './Icons';
 
@@ -19,35 +20,7 @@ export function EditPasswordModal({ loggedBy, onConfirm, onCancel }: Props) {
   const [value, setValue] = useState('');
   const [error, setError] = useState(false);
 
-  // Escape to close, Tab trapped within the dialog, focus returned on close.
-  useEffect(() => {
-    const prev = document.activeElement as HTMLElement | null;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onCancel();
-        return;
-      }
-      if (e.key !== 'Tab' || !dialogRef.current) return;
-      const f = dialogRef.current.querySelectorAll<HTMLElement>(
-        'button, [href], input, textarea, select, [tabindex]:not([tabindex="-1"])',
-      );
-      if (!f.length) return;
-      const first = f[0];
-      const last = f[f.length - 1];
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault();
-        first.focus();
-      }
-    };
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      prev?.focus?.();
-    };
-  }, [onCancel]);
+  useModalDialog(dialogRef, onCancel);
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
