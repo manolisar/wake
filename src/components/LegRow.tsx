@@ -190,13 +190,16 @@ function LegRowImpl({
     };
     return (
       <span className="relative block w-full">
+        {/* readOnly (not disabled) in view mode: text keeps full contrast and
+            stays selectable/copyable — same rationale as RemarksCell below.
+            Mutations are additionally gated upstream (updateLeg checks editable). */}
         <input
           value={leg[field]}
           onChange={set(field)}
           onFocus={onFocus}
           onBlur={onBlur}
           onKeyDown={onKeyDown}
-          disabled={readonly}
+          readOnly={readonly}
           data-col={col}
           aria-label={`${FIELD_LABEL[field] ?? field}, leg ${index + 1}`}
           aria-invalid={invalid || undefined}
@@ -326,7 +329,7 @@ function LegRowImpl({
           <input
             value={leg.speed}
             onChange={set('speed')}
-            disabled={readonly}
+            readOnly={readonly}
             data-col={FIELD_COL.speed}
             aria-label={`Target speed in knots, leg ${index + 1}`}
             inputMode="decimal"
