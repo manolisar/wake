@@ -40,7 +40,7 @@ export function UnlockModal({ loggedBy, note, onNote, onConfirm, onCancel }: Pro
           </div>
         </div>
         <div className="px-5 py-[1.1rem]">
-          <label htmlFor="vst-unlock-note" className="mb-1.5 block text-[0.55rem] font-bold uppercase tracking-[1.2px] text-faint">
+          <label htmlFor="vst-unlock-note" className="mb-1.5 block text-[0.6rem] font-bold uppercase tracking-[1.2px] text-faint">
             Reason · recorded to version history
           </label>
           <textarea

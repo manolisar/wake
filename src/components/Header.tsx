@@ -251,7 +251,7 @@ export function Header({
               }}
               className="vt-scale-in absolute right-4 top-[58px] min-w-[218px] overflow-hidden rounded-[10px] border border-line bg-surface p-1.5 shadow-[0_10px_40px_rgba(0,0,0,0.15)]"
             >
-              <div className="px-2 pb-1 pt-1.5 text-[0.5rem] font-bold uppercase tracking-[1.2px] text-faint">
+              <div className="px-2 pb-1 pt-1.5 text-[0.6rem] font-bold uppercase tracking-[1.2px] text-faint">
                 Excel · template format
               </div>
               <button

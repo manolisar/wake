@@ -196,7 +196,7 @@ export function LegsTable(props: Props) {
     <section>
       <div className="vt-no-print mb-2.5 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <span className="text-[0.55rem] font-bold uppercase tracking-[1.5px] text-faint">
+          <span className="text-[0.6rem] font-bold uppercase tracking-[1.5px] text-faint">
             Legs · {legs.length} stops
           </span>
           <span className="inline-flex items-center gap-1.5 font-mono text-[0.58rem] text-muted">
@@ -274,7 +274,7 @@ export function LegsTable(props: Props) {
                   <th
                     key={i}
                     scope="col"
-                    className={`sticky top-0 border-b border-r border-line bg-rail px-2 py-2 align-bottom text-[0.5rem] font-bold uppercase tracking-[1.1px] text-faint ${
+                    className={`sticky top-0 border-b border-r border-line bg-rail px-2 py-2 align-bottom text-[0.6rem] font-bold uppercase tracking-[1.1px] text-faint ${
                       wrap ? 'leading-tight' : 'whitespace-nowrap'
                     } ${isFrozen || isActions ? 'z-30' : 'z-20'} ${isActions ? 'vt-no-print' : ''}`}
                     style={{

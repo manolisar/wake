@@ -1,8 +1,10 @@
 // Left sidebar — a "chart index" of the folder: each .json is a sheet, its
 // cruises nested beneath (sorted by start date). Toolbar adds templates / files
 // and expands-collapses the whole tree; rows carry copy / paste / delete.
+import { useState } from 'react';
 import type { WorkspaceFile } from '../storage/workspace';
 import { voyageEndDate, voyageStartDate } from '../domain/schedule';
+import { ConfirmModal } from './ConfirmModal';
 import {
   SearchIcon,
   PlusIcon,
@@ -73,6 +75,8 @@ export function Sidebar({
   const q = search.trim().toLowerCase();
   const iconBtn =
     'vt-unbutton inline-flex h-7 w-7 items-center justify-center rounded-md text-muted hover:bg-rail hover:text-ink';
+  // Pending delete confirmation (styled dialog instead of window.confirm).
+  const [confirmDel, setConfirmDel] = useState<{ file: string; id: string; label: string } | null>(null);
 
   return (
     <aside className="flex min-h-0 w-full flex-col bg-surface">
@@ -104,7 +108,7 @@ export function Sidebar({
               title={selectedFile ? `Add a template to ${selectedFile}` : 'Select a file first'}
               className="vt-unbutton inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-cyan px-3 py-2 text-[0.8rem] font-semibold text-white shadow-[0_1px_2px_rgba(6,182,212,0.25)] transition hover:brightness-105 disabled:opacity-40 disabled:shadow-none"
             >
-              <PlusIcon size={14} /> Add template
+              <PlusIcon size={14} /> Add Template
             </button>
             <button
               onClick={onNewFile}
@@ -182,7 +186,7 @@ export function Sidebar({
                     {file.name.replace(/\.json$/i, '')}
                   </span>
                   {file.shipId && (
-                    <span className="flex-shrink-0 rounded bg-rail px-1 font-mono text-[0.52rem] font-bold uppercase tracking-[0.5px] text-muted">
+                    <span className="flex-shrink-0 rounded bg-rail px-1 font-mono text-[0.6rem] font-bold uppercase tracking-[0.5px] text-muted">
                       {file.shipId}
                     </span>
                   )}
@@ -278,11 +282,13 @@ export function Sidebar({
                             {canMutate && (
                               <button
                                 type="button"
-                                onClick={() => {
-                                  if (window.confirm(`Delete cruise “${vo.title || 'Untitled cruise'}” from ${file.name}?`)) {
-                                    onDeleteVoyage(file.name, vo.id);
-                                  }
-                                }}
+                                onClick={() =>
+                                  setConfirmDel({
+                                    file: file.name,
+                                    id: vo.id,
+                                    label: vo.number ? `${vo.number} — ${vo.title || 'Untitled cruise'}` : vo.title || 'Untitled cruise',
+                                  })
+                                }
                                 title="Delete cruise"
                                 aria-label={`Delete cruise ${vo.title || 'Untitled'}`}
                                 className="vt-unbutton flex h-6 w-6 items-center justify-center rounded text-muted hover:bg-line hover:text-[color:var(--color-spd-hi-fg)]"
@@ -301,6 +307,19 @@ export function Sidebar({
           );
         })}
       </div>
+
+      {confirmDel && (
+        <ConfirmModal
+          title="Delete cruise"
+          body={`Delete “${confirmDel.label}” from ${confirmDel.file}? The file on disk is updated immediately.`}
+          confirmLabel="Delete Cruise"
+          onConfirm={() => {
+            onDeleteVoyage(confirmDel.file, confirmDel.id);
+            setConfirmDel(null);
+          }}
+          onCancel={() => setConfirmDel(null)}
+        />
+      )}
     </aside>
   );
 }

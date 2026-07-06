@@ -57,7 +57,7 @@ export function EditPasswordModal({ loggedBy, onConfirm, onCancel }: Props) {
           </div>
         </div>
         <div className="px-5 py-[1.1rem]">
-          <label htmlFor="vst-edit-code" className="mb-1.5 block text-[0.55rem] font-bold uppercase tracking-[1.2px] text-faint">
+          <label htmlFor="vst-edit-code" className="mb-1.5 block text-[0.6rem] font-bold uppercase tracking-[1.2px] text-faint">
             Daily access code
           </label>
           <input

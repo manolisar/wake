@@ -48,7 +48,7 @@ function OverriddenPill({ onReset, disabled }: { onReset: () => void; disabled: 
       onClick={onReset}
       disabled={disabled}
       title="Overridden for this voyage — click to revert to the ship default"
-      className="ml-1.5 inline-flex items-center gap-1 rounded-full border border-warn-border bg-warn-bg px-1.5 py-[1px] font-mono text-[0.52rem] font-bold uppercase tracking-[0.5px] text-amber hover:brightness-95"
+      className="ml-1.5 inline-flex items-center gap-1 rounded-full border border-warn-border bg-warn-bg px-1.5 py-[1px] font-mono text-[0.6rem] font-bold uppercase tracking-[0.5px] text-amber hover:brightness-95"
     >
       ovr ×
     </button>
@@ -133,7 +133,7 @@ export function ConsumptionSettingsModal({
     onClose();
   };
 
-  const label = 'mb-1 block text-[0.55rem] font-bold uppercase tracking-[1.2px] text-faint';
+  const label = 'mb-1 block text-[0.6rem] font-bold uppercase tracking-[1.2px] text-faint';
   const input =
     'w-full rounded-lg border border-line bg-surface px-2.5 py-1.5 font-mono text-[0.78rem] text-ink outline-none focus:border-cyan disabled:opacity-50';
   const tabBtn = (active: boolean) =>
@@ -278,7 +278,7 @@ export function ConsumptionSettingsModal({
                           </option>
                         ))}
                       </select>
-                      <div className="mt-1 min-h-[0.9rem] text-[0.52rem] leading-tight text-faint">
+                      <div className="mt-1 min-h-[0.9rem] text-[0.6rem] leading-tight text-faint">
                         {cfg.mgoLocked ? 'No HFO bunker line' : cfg.openLoopOnly ? 'Open-loop scrubber only' : ''}
                       </div>
                     </div>

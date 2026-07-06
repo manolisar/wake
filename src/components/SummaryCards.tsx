@@ -38,7 +38,7 @@ export function SummaryCards({ summary }: { summary: Summary }) {
         >
           <div className="h-2" style={{ background: c.color }} />
           <div
-            className="flex items-center justify-between border-b border-line px-3.5 py-2 text-[0.55rem] font-bold uppercase tracking-[1.5px]"
+            className="flex items-center justify-between border-b border-line px-3.5 py-2 text-[0.6rem] font-bold uppercase tracking-[1.5px]"
             style={{ color: c.color, background: `color-mix(in srgb, ${c.color} 8%, var(--color-rail))` }}
           >
             <span>{c.label}</span>

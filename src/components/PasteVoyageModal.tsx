@@ -52,7 +52,7 @@ export function PasteVoyageModal({ targetFile, name, startDate, onName, onDate, 
           </div>
         </div>
         <div className="px-5 py-[1.1rem]">
-          <label htmlFor="vst-paste-name" className="mb-1.5 block text-[0.55rem] font-bold uppercase tracking-[1.2px] text-faint">
+          <label htmlFor="vst-paste-name" className="mb-1.5 block text-[0.6rem] font-bold uppercase tracking-[1.2px] text-faint">
             Voyage name
           </label>
           <input
@@ -63,7 +63,7 @@ export function PasteVoyageModal({ targetFile, name, startDate, onName, onDate, 
             spellCheck={false}
             className="mb-3 w-full rounded-lg border border-line bg-bg px-3 py-2 text-sm text-ink outline-none focus:border-cyan"
           />
-          <label htmlFor="vst-paste-date" className="mb-1.5 block text-[0.55rem] font-bold uppercase tracking-[1.2px] text-faint">
+          <label htmlFor="vst-paste-date" className="mb-1.5 block text-[0.6rem] font-bold uppercase tracking-[1.2px] text-faint">
             Start date
           </label>
           <input

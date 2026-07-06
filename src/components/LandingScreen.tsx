@@ -48,7 +48,7 @@ export function LandingScreen({ initial, onDone }: { initial: Session | null; on
         <div className="px-5 py-5">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label htmlFor="vst-name" className="mb-1.5 block text-[0.55rem] font-bold uppercase tracking-[1.2px] text-faint">
+              <label htmlFor="vst-name" className="mb-1.5 block text-[0.6rem] font-bold uppercase tracking-[1.2px] text-faint">
                 Name
               </label>
               <input
@@ -69,7 +69,7 @@ export function LandingScreen({ initial, onDone }: { initial: Session | null; on
               )}
             </div>
             <div>
-              <label htmlFor="vst-role" className="mb-1.5 block text-[0.55rem] font-bold uppercase tracking-[1.2px] text-faint">
+              <label htmlFor="vst-role" className="mb-1.5 block text-[0.6rem] font-bold uppercase tracking-[1.2px] text-faint">
                 Role
               </label>
               <select
