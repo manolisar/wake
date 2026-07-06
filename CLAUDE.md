@@ -175,7 +175,10 @@ It is visible and editable in Fuel Setup — Chief Engineer to validate.
 
 UI: **Fuel Setup** (`ConsumptionSettingsModal`, ship-defaults + this-voyage tabs with override
 pills) and **Consumption** (runs the calc; in edit mode the snapshot + a version entry persist to
-the voyage, in view mode the report opens transiently). `ConsumptionReport` is the only results
+the voyage, in view mode the report opens transiently). **Saving parameters auto-recalculates**:
+`setConsumptionDefaults`/`setVoyageOverrides` refresh the current voyage's existing snapshot
+immediately, so a persisted report never sits on old parameters (leg edits still go through the
+stale banner → Recalculate). `ConsumptionReport` is the only results
 surface (no legs-table columns / summary cards / Excel changes); its per-leg St/By MW inputs are
 the one edit affordance. Fuel colors are stable: HFO orange, MGO green, LSFO indigo.
 

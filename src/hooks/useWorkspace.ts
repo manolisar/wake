@@ -858,9 +858,21 @@ export function useWorkspace(session: Session): WorkspaceApi {
       setFiles((prev) =>
         prev.map((f) => (f.name === selectedFile ? { ...f, consumptionDefaults: s } : f)),
       );
+      // A saved snapshot must never sit on old parameters: recalculate the
+      // current voyage's consumption with the new defaults right away (the
+      // report, if open, updates live). Other voyages recalc when run.
+      const voyage = filesRef.current.find((f) => f.name === selectedFile)?.voyages[selectedId];
+      if (voyage?.consumption && editable) {
+        const resolved = resolveSettings(s, voyage.consumptionOverrides);
+        const result = computeVoyageConsumption(voyage, resolved, { by: loggedBy });
+        mutate((v) => {
+          v.consumption = result;
+        });
+        flash(`Recalculated with new defaults · ${result.totals.totalMT.toFixed(1)} MT`);
+      }
       markDirty(selectedFile);
     },
-    [canEdit, editAuthorized, selectedFile, markDirty],
+    [canEdit, editAuthorized, selectedFile, selectedId, editable, loggedBy, mutate, flash, markDirty],
   );
 
   const setVoyageOverrides = useCallback(
@@ -869,9 +881,15 @@ export function useWorkspace(session: Session): WorkspaceApi {
       mutate((v) => {
         if (o && Object.keys(o).length) v.consumptionOverrides = o;
         else delete v.consumptionOverrides;
+        // Same rule as defaults: refresh an existing snapshot immediately so
+        // the persisted numbers always reflect the parameters just saved.
+        if (v.consumption) {
+          const resolved = resolveSettings(consumptionDefaults, v.consumptionOverrides);
+          v.consumption = computeVoyageConsumption(v, resolved, { by: loggedBy });
+        }
       });
     },
-    [editable, mutate],
+    [editable, mutate, consumptionDefaults, loggedBy],
   );
 
   const calculateConsumption = useCallback(() => {
