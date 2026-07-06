@@ -163,25 +163,73 @@ function Workspace({
           {w.current ? (
             <div className="flex min-w-[1180px] flex-col gap-5 px-6 py-6">
               <CruiseCard voyage={w.current} fileName={w.selectedFile} editable={w.editable} onTitle={w.setTitle} onNumber={w.setNumber} />
-              <SummaryCards summary={summary} />
-              <LegsTable
-                voyage={w.current}
-                legViews={legViews}
-                readonly={!w.editable}
-                onField={w.updateLeg}
-                onMode={w.setMode}
-                onToggleType={w.toggleType}
-                onUp={(i) => w.moveLeg(i, -1)}
-                onDown={(i) => w.moveLeg(i, 1)}
-                onInsert={w.insertLeg}
-                onDelete={w.deleteLeg}
-                onAdd={w.addLeg}
-                onFill={w.fillDown}
-              />
-              <section className="grid grid-cols-[1.4fr_1fr] gap-4">
-                <VersionHistory versions={w.current.versions} />
-                <MathExplainer />
-              </section>
+
+              {/* Main tabs: the ports/times grid vs the voyage's fuel consumption */}
+              <div role="tablist" aria-label="Voyage views" className="flex gap-1.5">
+                <button
+                  role="tab"
+                  aria-selected={!w.showReport}
+                  onClick={() => w.setShowReport(false)}
+                  className={
+                    'rounded-lg px-4 py-2 text-[0.78rem] font-bold ' +
+                    (!w.showReport ? 'bg-navy text-white' : 'border border-line bg-surface text-muted hover:bg-rail')
+                  }
+                >
+                  Ports &amp; Times
+                </button>
+                <button
+                  role="tab"
+                  aria-selected={w.showReport}
+                  onClick={() => w.setShowReport(true)}
+                  className={
+                    'rounded-lg px-4 py-2 text-[0.78rem] font-bold ' +
+                    (w.showReport ? 'bg-navy text-white' : 'border border-line bg-surface text-muted hover:bg-rail')
+                  }
+                >
+                  Fuel Consumption
+                  {w.consumptionStale && (
+                    <span
+                      className="ml-1.5 inline-block h-1.5 w-1.5 rounded-full align-middle"
+                      style={{ background: 'var(--color-amber-btn)' }}
+                      title="Data changed since the last calculation"
+                    />
+                  )}
+                </button>
+              </div>
+
+              {!w.showReport ? (
+                <>
+                  <SummaryCards summary={summary} />
+                  <LegsTable
+                    voyage={w.current}
+                    legViews={legViews}
+                    readonly={!w.editable}
+                    onField={w.updateLeg}
+                    onMode={w.setMode}
+                    onToggleType={w.toggleType}
+                    onUp={(i) => w.moveLeg(i, -1)}
+                    onDown={(i) => w.moveLeg(i, 1)}
+                    onInsert={w.insertLeg}
+                    onDelete={w.deleteLeg}
+                    onAdd={w.addLeg}
+                    onFill={w.fillDown}
+                  />
+                  <section className="grid grid-cols-[1.4fr_1fr] gap-4">
+                    <VersionHistory versions={w.current.versions} />
+                    <MathExplainer />
+                  </section>
+                </>
+              ) : (
+                <ConsumptionReport
+                  voyage={w.current}
+                  consumption={w.consumptionResult}
+                  stale={w.consumptionStale}
+                  transient={!!w.consumptionResult && w.current.consumption !== w.consumptionResult}
+                  editable={w.editable}
+                  onSetLegField={w.updateLeg}
+                  onRecalculate={w.calculateConsumption}
+                />
+              )}
             </div>
           ) : (
             <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center">
@@ -230,18 +278,6 @@ function Workspace({
           onSaveDefaults={w.setConsumptionDefaults}
           onSaveOverrides={w.setVoyageOverrides}
           onClose={() => w.setShowFuelSetup(false)}
-        />
-      )}
-      {w.showReport && w.current && w.consumptionResult && (
-        <ConsumptionReport
-          voyage={w.current}
-          consumption={w.consumptionResult}
-          stale={w.consumptionStale}
-          transient={!w.current.consumption || w.current.consumption !== w.consumptionResult}
-          editable={w.editable}
-          onSetLegField={w.updateLeg}
-          onRecalculate={w.calculateConsumption}
-          onClose={() => w.setShowReport(false)}
         />
       )}
       {w.pasteState && (

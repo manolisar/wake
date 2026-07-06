@@ -1,8 +1,9 @@
-// The consumption report — full-screen overlay with the per-leg fuel breakdown,
-// DG loading, assumptions, totals by fuel, and warnings. Read-only view of a
-// snapshot; the per-leg St/By MW inputs are the one edit surface (they write to
-// the leg and mark the snapshot stale until recalculated).
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+// The consumption view — the "Fuel Consumption" tab of the main area, with the
+// per-leg fuel breakdown, DG loading, assumptions, totals by fuel, and
+// warnings. Read-only view of a snapshot; the per-leg St/By MW inputs are the
+// one edit surface (they write to the leg and mark the snapshot stale until
+// recalculated).
+import { useMemo, useState, type ReactNode } from 'react';
 import type { Leg, Voyage } from '../types';
 import type {
   CalculationResult,
@@ -14,13 +15,12 @@ import { engineConfigs } from '../domain/consumption/engineDefaults';
 
 interface Props {
   voyage: Voyage;
-  consumption: VoyageConsumption;
+  consumption: VoyageConsumption | undefined; // undefined = not calculated yet
   stale: boolean;
   transient: boolean; // view-only run, not persisted
   editable: boolean;
   onSetLegField: (i: number, field: keyof Leg, val: string) => void;
-  onRecalculate: () => void;
-  onClose: () => void;
+  onRecalculate: () => void; // also serves as the first-time Calculate
 }
 
 const FUEL_COLOR: Record<FuelType, string> = {
@@ -162,59 +162,71 @@ export function ConsumptionReport({
   editable,
   onSetLegField,
   onRecalculate,
-  onClose,
 }: Props) {
   const [openDg, setOpenDg] = useState<number | null>(null);
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [onClose]);
-
-  const s = consumption.settings;
-  const t = consumption.totals;
-  const offline = s.engines.filter((e) => !e.available).map((e) => `DG${e.id}`);
   const overriddenKeys = useMemo(
     () => Object.keys(voyage.consumptionOverrides ?? {}),
     [voyage.consumptionOverrides],
   );
 
+  // Not calculated yet — offer the command inline.
+  if (!consumption) {
+    return (
+      <section className="vt-scale-in flex flex-col items-center justify-center gap-3 rounded-2xl border border-line bg-surface px-6 py-16 text-center">
+        <span className="inline-flex h-[38px] w-[38px] items-center justify-center rounded-[11px] bg-navy font-mono text-[0.72rem] font-bold text-white">
+          MT
+        </span>
+        <div className="text-base font-bold text-ink">No consumption calculated yet</div>
+        <div className="max-w-md text-[0.8rem] leading-relaxed text-muted">
+          Run the SL consumption model over this voyage's populated legs — sea passages at their
+          solved speeds, St/By phases, and port stays. Parameters are in Fuel Setup.
+        </div>
+        <button
+          onClick={onRecalculate}
+          className="mt-1 inline-flex items-center gap-1.5 rounded-lg bg-navy px-4 py-2 text-[0.8rem] font-semibold text-white hover:brightness-110"
+        >
+          Calculate Consumption
+        </button>
+      </section>
+    );
+  }
+
+  const s = consumption.settings;
+  const t = consumption.totals;
+  const offline = s.engines.filter((e) => !e.available).map((e) => `DG${e.id}`);
+
   const th = 'px-2 py-1.5 text-right font-mono text-[0.55rem] font-bold uppercase tracking-[1px] text-faint';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(10,25,41,0.45)] p-4 backdrop-blur-[4px]" onClick={onClose}>
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="vst-report-title"
-        style={{ overscrollBehavior: 'contain' }}
-        className="vt-scale-in flex max-h-[94vh] w-[1060px] max-w-[97vw] flex-col overflow-hidden rounded-2xl bg-surface shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)]"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="flex items-center gap-3 border-b border-line px-5 py-4">
-          <span className="inline-flex h-[30px] w-[30px] items-center justify-center rounded-[9px] bg-navy font-mono text-[0.62rem] font-bold text-white">
-            MT
-          </span>
-          <div className="flex-1">
-            <div id="vst-report-title" className="text-[0.9rem] font-extrabold">
-              Consumption Report — {voyage.number} · {voyage.title}
-            </div>
-            <div className="text-[0.66rem] text-muted">
-              Calculated {new Date(consumption.computedAt).toLocaleString()} by {consumption.by || '—'}
-              {transient && ' · view-only (not saved)'}
-            </div>
+    <section
+      aria-labelledby="vst-report-title"
+      className="vt-scale-in flex flex-col overflow-hidden rounded-2xl border border-line bg-surface"
+    >
+      {/* Header */}
+      <div className="flex items-center gap-3 border-b border-line px-5 py-4">
+        <span className="inline-flex h-[30px] w-[30px] items-center justify-center rounded-[9px] bg-navy font-mono text-[0.62rem] font-bold text-white">
+          MT
+        </span>
+        <div className="flex-1">
+          <div id="vst-report-title" className="text-[0.9rem] font-extrabold">
+            Consumption Report — {voyage.number} · {voyage.title}
           </div>
-          <button
-            onClick={onClose}
-            className="rounded-lg border border-line bg-surface px-3.5 py-2 text-[0.78rem] font-semibold text-ink hover:bg-rail"
-          >
-            Close
-          </button>
+          <div className="text-[0.66rem] text-muted">
+            Calculated {new Date(consumption.computedAt).toLocaleString()} by {consumption.by || '—'}
+            {transient && ' · view-only (not saved)'}
+          </div>
         </div>
+        {!stale && (
+          <button
+            onClick={onRecalculate}
+            className="rounded-lg border border-line bg-surface px-3.5 py-2 text-[0.78rem] font-semibold text-ink hover:bg-rail"
+            title="Run the calculation again with the current data and parameters"
+          >
+            Recalculate
+          </button>
+        )}
+      </div>
 
         {/* Stale banner */}
         {stale && (
@@ -231,7 +243,7 @@ export function ConsumptionReport({
           </div>
         )}
 
-        <div className="vt-scroll min-h-0 flex-1 overflow-auto px-5 py-4">
+        <div className="px-5 py-4">
           {/* Assumptions */}
           <div className="mb-4 rounded-lg border border-line bg-rail/50 px-3.5 py-2.5">
             <div className="mb-1 font-mono text-[0.55rem] font-bold uppercase tracking-[1.2px] text-faint">
@@ -405,8 +417,7 @@ export function ConsumptionReport({
             </div>
           )}
         </div>
-      </div>
-    </div>
+    </section>
   );
 }
 

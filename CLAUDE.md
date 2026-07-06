@@ -175,7 +175,11 @@ It is visible and editable in Fuel Setup — Chief Engineer to validate.
 
 UI: **Fuel Setup** (`ConsumptionSettingsModal`, ship-defaults + this-voyage tabs with override
 pills) and **Consumption** (runs the calc; in edit mode the snapshot + a version entry persist to
-the voyage, in view mode the report opens transiently). **Saving parameters auto-recalculates**:
+the voyage, in view mode the result shows transiently). The main area under the CruiseCard is a
+**two-tab view**: *Ports & Times* (summary cards + legs grid + version history) and *Fuel
+Consumption* (`ConsumptionReport` rendered inline; empty state offers Calculate; the tab shows an
+amber dot when the snapshot is stale). `useWorkspace.showReport` is the active-tab flag and resets
+to Ports & Times on voyage change. **Saving parameters auto-recalculates**:
 `setConsumptionDefaults`/`setVoyageOverrides` refresh the current voyage's existing snapshot
 immediately, so a persisted report never sits on old parameters (leg edits still go through the
 stale banner → Recalculate). `ConsumptionReport` is the only results
