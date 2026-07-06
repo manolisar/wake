@@ -48,7 +48,7 @@ export function EditPasswordModal({ loggedBy, onConfirm, onCancel }: Props) {
         onSubmit={submit}
       >
         <div className="flex items-center gap-2.5 border-b border-line px-5 py-4">
-          <span className="inline-flex h-[30px] w-[30px] items-center justify-center rounded-[9px] border border-[#FDE68A] bg-[#FFFBEB] text-amber">
+          <span className="inline-flex h-[30px] w-[30px] items-center justify-center rounded-[9px] border border-warn-border bg-warn-bg text-amber">
             <LockIcon size={15} />
           </span>
           <div>

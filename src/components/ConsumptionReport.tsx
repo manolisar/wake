@@ -122,7 +122,7 @@ function StbyRow({
           className="rounded px-1 py-[1px] font-mono"
           style={
             phase.source === 'override'
-              ? { background: '#FFFBEB', color: 'var(--color-amber)' }
+              ? { background: 'var(--color-warn-bg)', color: 'var(--color-amber)' }
               : phase.source === 'speed'
                 ? { background: 'var(--color-spd-ok-bg)', color: 'var(--color-spd-ok-fg)' }
                 : { background: 'var(--color-rail)', color: 'var(--color-muted)' }
@@ -230,7 +230,7 @@ export function ConsumptionReport({
 
         {/* Stale banner */}
         {stale && (
-          <div className="flex items-center gap-3 border-b border-[#FDE68A] bg-[#FFFBEB] px-5 py-2.5">
+          <div className="flex items-center gap-3 border-b border-warn-border bg-warn-bg px-5 py-2.5">
             <span className="text-[0.72rem] font-semibold text-amber">
               Voyage data or parameters changed since this calculation — figures below may be outdated.
             </span>
@@ -405,7 +405,7 @@ export function ConsumptionReport({
 
           {/* Warnings */}
           {consumption.warnings.length > 0 && (
-            <div className="mt-3 rounded-lg border border-[#FDE68A] bg-[#FFFBEB] px-3.5 py-2.5">
+            <div className="mt-3 rounded-lg border border-warn-border bg-warn-bg px-3.5 py-2.5">
               <div className="mb-1 font-mono text-[0.55rem] font-bold uppercase tracking-[1.2px] text-amber">
                 Warnings
               </div>

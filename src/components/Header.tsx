@@ -164,7 +164,7 @@ export function Header({
         className="inline-flex flex-shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1 text-[0.62rem] font-bold tracking-[0.8px]"
         style={
           editing
-            ? { background: '#FFFBEB', color: '#D97706', borderColor: '#FDE68A' }
+            ? { background: 'var(--color-warn-bg)', color: 'var(--color-amber)', borderColor: 'var(--color-warn-border)' }
             : { background: 'var(--color-rail)', color: 'var(--color-muted)', borderColor: 'var(--color-line)' }
         }
       >

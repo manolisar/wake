@@ -200,10 +200,10 @@ export function LegsTable(props: Props) {
             Legs · {legs.length} stops
           </span>
           <span className="inline-flex items-center gap-1.5 font-mono text-[0.58rem] text-muted">
-            <span className="inline-block h-[9px] w-[9px] rounded-sm bg-[#F87171]" />&gt;19 kn
+            <span className="inline-block h-[9px] w-[9px] rounded-sm" style={{ background: 'var(--color-spd-hi-fg)' }} />&gt;19 kn
           </span>
           <span className="inline-flex items-center gap-1.5 font-mono text-[0.58rem] text-muted">
-            <span className="inline-block h-[9px] w-[9px] rounded-sm bg-[#8b5cf6]" />&lt;10 kn
+            <span className="inline-block h-[9px] w-[9px] rounded-sm" style={{ background: 'var(--color-spd-lo-fg)' }} />&lt;10 kn
           </span>
         </div>
         <div className="flex items-center gap-1.5">

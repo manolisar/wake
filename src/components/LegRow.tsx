@@ -332,7 +332,8 @@ function LegRowImpl({
             inputMode="decimal"
             spellCheck={false}
             placeholder="kn"
-            className="w-full min-w-0 rounded border border-cyan bg-[#ECFEFF] px-1 py-[3px] text-right font-mono text-[0.72rem] font-bold outline-none focus:bg-surface"
+            style={{ background: 'color-mix(in srgb, var(--color-cyan) 10%, var(--color-surface))' }}
+            className="w-full min-w-0 rounded border border-cyan px-1 py-[3px] text-right font-mono text-[0.72rem] font-bold outline-none focus:bg-surface"
           />
         ) : null}
       </td>
@@ -391,7 +392,7 @@ function LegRowImpl({
           <td className={`${tdCls} px-1 text-center`}>{view.isPort ? inp('sunrise') : dash}</td>
           <td className={`${tdCls} px-1 text-center`}>{view.isPort ? inp('sunset') : dash}</td>
           <td className={`${tdCls} px-1.5 text-center`}>
-            <span className="font-mono text-[0.7rem]" style={{ color: view.hasDaylight ? '#D97706' : '#B0BAC6' }}>
+            <span className="font-mono text-[0.7rem]" style={{ color: view.hasDaylight ? 'var(--color-amber)' : 'var(--color-faint)' }}>
               {view.daylightDisplay}
             </span>
           </td>

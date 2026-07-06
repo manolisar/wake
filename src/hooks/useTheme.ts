@@ -29,6 +29,9 @@ function apply(theme: Theme): void {
   const el = document.documentElement;
   if (theme === 'default') el.removeAttribute('data-theme');
   else el.setAttribute('data-theme', theme);
+  // Keep the browser chrome (theme-color) in step with the page background.
+  const bg = getComputedStyle(el).getPropertyValue('--color-bg').trim();
+  if (bg) document.querySelector('meta[name="theme-color"]')?.setAttribute('content', bg);
 }
 
 export function useTheme() {

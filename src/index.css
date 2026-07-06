@@ -38,6 +38,17 @@
   --color-spd-lo-bg: #f3e8ff;
   --color-spd-ok-fg: #047857;
   --color-spd-ok-bg: #ecfdf5;
+
+  /* amber warning surfaces (EDIT-MODE pill, stale banner, override pills) */
+  --color-warn-bg: #fffbeb;
+  --color-warn-border: #fde68a;
+
+  /* themed scrollbar thumb */
+  --color-scroll-thumb: #cfd8e3;
+}
+
+:root {
+  color-scheme: light;
 }
 
 /* ── Named themes — each redefines the structural tokens so every token-based
@@ -55,10 +66,15 @@
   --color-faint: #847d69;
   --color-line: #d7cbac;
   --color-btn-strong: #2b3a30;
+  --color-warn-bg: #f4ead0;
+  --color-warn-border: #e2c96f;
+  --color-scroll-thumb: #cbbf9f;
 }
 
 /* Bridge Console — deep-navy "bridge at night" with phosphor accents. */
 :root[data-theme='console'] {
+  /* native widgets (select dropdowns, date picker, scrollbars) go dark too */
+  color-scheme: dark;
   --color-bg: #0b1622;
   --color-surface: #10202f;
   --color-rail: #16283a;
@@ -71,6 +87,9 @@
   --color-spd-hi-fg: #f87171;
   --color-spd-lo-fg: #a78bfa;
   --color-spd-ok-fg: #34d399;
+  --color-warn-bg: #2b2210;
+  --color-warn-border: #6d5a1e;
+  --color-scroll-thumb: #2e4356;
 }
 
 * {
@@ -88,7 +107,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 #root {
-  height: 100vh;
+  height: 100dvh;
 }
 input,
 textarea,
@@ -185,7 +204,7 @@ button {
   height: 10px;
 }
 .vt-scroll::-webkit-scrollbar-thumb {
-  background: #cfd8e3;
+  background: var(--color-scroll-thumb);
   border-radius: 8px;
   border: 2px solid var(--color-bg);
 }

@@ -48,7 +48,7 @@ function OverriddenPill({ onReset, disabled }: { onReset: () => void; disabled: 
       onClick={onReset}
       disabled={disabled}
       title="Overridden for this voyage — click to revert to the ship default"
-      className="ml-1.5 inline-flex items-center gap-1 rounded-full border border-[#FDE68A] bg-[#FFFBEB] px-1.5 py-[1px] font-mono text-[0.52rem] font-bold uppercase tracking-[0.5px] text-amber hover:brightness-95"
+      className="ml-1.5 inline-flex items-center gap-1 rounded-full border border-warn-border bg-warn-bg px-1.5 py-[1px] font-mono text-[0.52rem] font-bold uppercase tracking-[0.5px] text-amber hover:brightness-95"
     >
       ovr ×
     </button>
