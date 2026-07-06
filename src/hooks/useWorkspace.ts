@@ -87,7 +87,7 @@ export interface WorkspaceApi {
 
   search: string;
   expanded: Record<string, boolean>;
-  toast: string;
+  toast: { msg: string; kind: 'success' | 'error' };
   exportMenu: boolean;
   showPassword: boolean;
   showUnlock: boolean;
@@ -167,7 +167,7 @@ export function useWorkspace(session: Session): WorkspaceApi {
   const [showPassword, setShowPassword] = useState(false);
   const [showUnlock, setShowUnlock] = useState(false);
   const [unlockNote, setUnlockNote] = useState('');
-  const [toast, setToast] = useState('');
+  const [toast, setToast] = useState<{ msg: string; kind: 'success' | 'error' }>({ msg: '', kind: 'success' });
   const [exportMenu, setExportMenu] = useState(false);
   const [clipboardCount, setClipboardCount] = useState(0);
   const [pasteState, setPasteState] = useState<PasteState | null>(null);
@@ -215,9 +215,16 @@ export function useWorkspace(session: Session): WorkspaceApi {
   }, [editAuthorized]);
 
   const flash = useCallback((msg: string) => {
-    setToast(msg);
+    setToast({ msg, kind: 'success' });
     if (toastTimer.current) clearTimeout(toastTimer.current);
-    toastTimer.current = setTimeout(() => setToast(''), 2200);
+    toastTimer.current = setTimeout(() => setToast({ msg: '', kind: 'success' }), 2200);
+  }, []);
+
+  // Failures get their own visual channel and linger long enough to be read.
+  const flashError = useCallback((msg: string) => {
+    setToast({ msg, kind: 'error' });
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast({ msg: '', kind: 'success' }), 6000);
   }, []);
 
   // ── Disk write-back ───────────────────────────────────────────────────
@@ -327,9 +334,9 @@ export function useWorkspace(session: Session): WorkspaceApi {
       if (!dir) return;
       applyLoad(await readWorkspace(dir));
     } catch (e) {
-      flash(`Could not open folder: ${(e as Error).message}`);
+      flashError(`Could not open folder: ${(e as Error).message}`);
     }
-  }, [applyLoad, flash]);
+  }, [applyLoad, flashError]);
 
   // Reopen the remembered folder — readWorkspace re-requests readwrite (one
   // permission prompt) on this click. Falls back to the picker if it's gone.
@@ -342,9 +349,9 @@ export function useWorkspace(session: Session): WorkspaceApi {
     try {
       applyLoad(await readWorkspace(h));
     } catch (e) {
-      flash(`Couldn’t reopen ${h.name}: ${(e as Error).message}. Choose the folder again.`);
+      flashError(`Couldn’t reopen ${h.name}: ${(e as Error).message}. Choose the folder again.`);
     }
-  }, [applyLoad, openFolder, flash]);
+  }, [applyLoad, openFolder, flashError]);
 
   // ── Derived ───────────────────────────────────────────────────────────
   const currentFile = useMemo(() => files.find((f) => f.name === selectedFile), [files, selectedFile]);
@@ -638,9 +645,9 @@ export function useWorkspace(session: Session): WorkspaceApi {
       setExpanded((prev) => ({ ...prev, [file.name]: true }));
       flash(`Created ${file.name}`);
     } catch (e) {
-      flash(`Couldn’t create file: ${(e as Error).message}`);
+      flashError(`Couldn’t create file: ${(e as Error).message}`);
     }
-  }, [canEdit, editAuthorized, flash]);
+  }, [canEdit, editAuthorized, flash, flashError]);
 
   // Delete a cruise (template) from its file and write the file back.
   const deleteVoyage = useCallback(
@@ -661,14 +668,14 @@ export function useWorkspace(session: Session): WorkspaceApi {
           .then(() => flash('Cruise deleted'))
           .catch(() => {
             markDirty(fileName);
-            flash(`Cruise deleted — couldn’t write ${fileName} yet, retrying`);
+            flashError(`Cruise deleted — couldn’t write ${fileName} yet, retrying`);
           })
           .finally(() => inFlightRef.current--);
       } else {
         flash('Cruise deleted');
       }
     },
-    [canEdit, editAuthorized, selectedFile, selectedId, markDirty, flash],
+    [canEdit, editAuthorized, selectedFile, selectedId, markDirty, flash, flashError],
   );
 
   // Edit the current cruise's name (product name).
@@ -819,13 +826,13 @@ export function useWorkspace(session: Session): WorkspaceApi {
         .then(() => flash(`Pasted into ${ps.targetFile}`))
         .catch(() => {
           markDirty(ps.targetFile);
-          flash(`Pasted — couldn’t write ${ps.targetFile} yet, retrying`);
+          flashError(`Pasted — couldn’t write ${ps.targetFile} yet, retrying`);
         })
         .finally(() => inFlightRef.current--);
     } else {
       flash(`Pasted into ${ps.targetFile}`);
     }
-  }, [pasteState, loggedBy, markDirty, flash]);
+  }, [pasteState, loggedBy, markDirty, flash, flashError]);
 
   // ── Save / export ─────────────────────────────────────────────────────
   const doSaveJson = useCallback(async () => {
@@ -836,11 +843,11 @@ export function useWorkspace(session: Session): WorkspaceApi {
     dirtyRef.current.add(selectedFile);
     const failed = await flushDirty();
     if (failed.includes(selectedFile)) {
-      flash(`Couldn’t save ${selectedFile} — check folder access`);
+      flashError(`Couldn’t save ${selectedFile} — check folder access`);
     } else {
       flash(`Saved · ${selectedFile}`);
     }
-  }, [selectedFile, flushDirty, flash]);
+  }, [selectedFile, flushDirty, flash, flashError]);
 
   // Import an .xlsx into the folder as a NEW .json file, then select it.
   const doImportExcel = useCallback(async () => {
@@ -872,9 +879,9 @@ export function useWorkspace(session: Session): WorkspaceApi {
       setExpanded((prev) => ({ ...prev, [file.name]: true }));
       flash(`Imported ${Object.keys(res.voyages).length} voyage(s) → ${file.name}`);
     } catch (e) {
-      flash(`Import failed: ${(e as Error).message}`);
+      flashError(`Import failed: ${(e as Error).message}`);
     }
-  }, [canEdit, editAuthorized, loggedBy, flash]);
+  }, [canEdit, editAuthorized, loggedBy, flash, flashError]);
 
   const doExportExcel = useCallback(
     async (scope: XlsxScope) => {
@@ -886,10 +893,10 @@ export function useWorkspace(session: Session): WorkspaceApi {
         const filename = await exportExcel(ship, currentFile.voyages, scope, selectedId);
         flash(scope === 'all' ? `All voyages exported · ${filename}` : `Exported · ${filename}`);
       } catch (e) {
-        flash(`Export failed: ${(e as Error).message}`);
+        flashError(`Export failed: ${(e as Error).message}`);
       }
     },
-    [currentFile, selectedId, flash],
+    [currentFile, selectedId, flash, flashError],
   );
 
   // ── Consumption (fuel) ────────────────────────────────────────────────

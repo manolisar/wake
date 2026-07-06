@@ -294,7 +294,7 @@ function Workspace({
           onCancel={w.cancelPaste}
         />
       )}
-      <Toast message={w.toast} />
+      <Toast message={w.toast.msg} kind={w.toast.kind} />
     </div>
   );
 }
@@ -323,7 +323,7 @@ function SignedIn({
           onReopen={w.reopenLast}
         />
         {/* Folder-open failures (denied permission, unreadable dir) flash here */}
-        <Toast message={w.toast} />
+        <Toast message={w.toast.msg} kind={w.toast.kind} />
       </>
     );
   }
