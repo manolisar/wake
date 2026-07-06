@@ -118,9 +118,11 @@ export const COL_W: number[] = [
   58, // 15 S/B Dep Time (computed)
   58, // 16 S/B Dep Spd  (computed)
   54, // 17 Port hrs (computed)
-  FIELD_SPEC.sunrise.width, // 18 Sunrise
+  // Sunrise/Daylight carry the widest single-word headers — floor the column
+  // so the label fits without clipping at the 0.6rem header size.
+  Math.max(FIELD_SPEC.sunrise.width, 70), // 18 Sunrise
   FIELD_SPEC.sunset.width, // 19 Sunset
-  56, // 20 Daylight (computed)
+  70, // 20 Daylight (computed)
   FIELD_SPEC.utc.width, // 21 UTC ±
   FIELD_SPEC.openLoop.width, // 22 Open Loop
   FIELD_SPEC.seaCond.width, // 23 Sea Cond

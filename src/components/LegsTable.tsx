@@ -267,9 +267,10 @@ export function LegsTable(props: Props) {
                 if (hiddenCols.has(i)) return null;
                 const isFrozen = i < FROZEN;
                 const isActions = i === COLUMNS.length - 1;
-                // The St/By headers (11–16) are long ("S/B Arr Dist") — let them
-                // wrap to a second line instead of forcing the column wider.
-                const wrap = i >= 11 && i <= 16;
+                // The narrow center columns (St/By, Port hrs, sun, loop) carry
+                // long labels — let them wrap to a second line instead of
+                // clipping or forcing the column wider.
+                const wrap = i >= 11 && i <= 23;
                 return (
                   <th
                     key={i}
