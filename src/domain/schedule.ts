@@ -10,6 +10,12 @@ export function voyageStartDate(vo: Voyage): string {
   return dates[0] ?? '';
 }
 
+/** Latest dated leg of a voyage as 'YYYY-MM-DD', or '' if it has none. */
+export function voyageEndDate(vo: Voyage): string {
+  const dates = vo.legs.map((l) => l.date).filter(Boolean).sort();
+  return dates[dates.length - 1] ?? '';
+}
+
 /** Earliest start date across a file's voyages — the file's chronological key. */
 export function fileStartKey(voyages: VoyageMap): string {
   const starts = Object.values(voyages)

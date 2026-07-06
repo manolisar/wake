@@ -2,7 +2,7 @@
 // cruises nested beneath (sorted by start date). Toolbar adds templates / files
 // and expands-collapses the whole tree; rows carry copy / paste / delete.
 import type { WorkspaceFile } from '../storage/workspace';
-import { voyageStartDate } from '../domain/schedule';
+import { voyageEndDate, voyageStartDate } from '../domain/schedule';
 import {
   SearchIcon,
   PlusIcon,
@@ -219,6 +219,12 @@ export function Sidebar({
                   {rows.map((vo) => {
                     const active = file.name === selectedFile && vo.id === selectedId;
                     const st = vo.locked ? STATUS.locked : vo.ended ? STATUS.ended : STATUS.active;
+                    // Primary line = operator-entered cruise number + date span;
+                    // the product name sits greyed beneath. The voyage's `id`
+                    // stays a separate internal identity and is never shown.
+                    const start = voyageStartDate(vo);
+                    const end = voyageEndDate(vo);
+                    const range = start ? (end && end !== start ? `${fmtDate(start)} – ${fmtDate(end)}` : fmtDate(start)) : '—';
                     return (
                       <div key={vo.id} className="group relative flex items-center">
                         {active && <span className="absolute -left-[10px] top-1.5 bottom-1.5 w-[2px] rounded-full bg-cyan" aria-hidden="true" />}
@@ -226,7 +232,7 @@ export function Sidebar({
                           type="button"
                           onClick={() => onSelect(file.name, vo.id)}
                           aria-current={active ? 'true' : undefined}
-                          className="vt-unbutton flex min-w-0 flex-1 select-none items-center gap-2 rounded-md px-2 py-[7px] transition-colors hover:bg-rail"
+                          className="vt-unbutton flex min-w-0 flex-1 select-none items-center gap-2 rounded-md px-2 py-[5px] transition-colors hover:bg-rail"
                           style={{ background: active ? 'color-mix(in srgb, var(--color-cyan) 12%, transparent)' : 'transparent' }}
                         >
                           <span
@@ -234,24 +240,32 @@ export function Sidebar({
                             className="h-[7px] w-[7px] flex-shrink-0 rounded-full"
                             style={{ background: st.dot, boxShadow: active ? `0 0 0 3px color-mix(in srgb, ${st.dot} 22%, transparent)` : 'none' }}
                           />
-                          <span
-                            className="min-w-0 flex-1 truncate text-left text-[0.78rem]"
-                            style={{
-                              color: active ? 'var(--color-cyan-deep)' : vo.title || vo.number ? 'var(--color-ink)' : 'var(--color-faint)',
-                              fontWeight: active ? 600 : 500,
-                              fontStyle: vo.title || vo.number ? 'normal' : 'italic',
-                            }}
-                          >
-                            {vo.number && <span className="font-mono text-[0.72rem] text-cyan-deep">{vo.number} </span>}
-                            {vo.title || (vo.number ? '' : 'Untitled cruise')}
+                          <span className="min-w-0 flex-1 text-left">
+                            <span className="flex items-baseline gap-1.5">
+                              <span className="flex-shrink-0 font-mono text-[0.74rem] font-bold text-cyan-deep">
+                                {vo.number || '—'}
+                              </span>
+                              <span
+                                className="min-w-0 truncate font-mono text-[0.68rem] tabular-nums"
+                                style={{
+                                  color: active ? 'var(--color-cyan-deep)' : 'var(--color-ink)',
+                                  fontWeight: active ? 600 : 500,
+                                }}
+                              >
+                                {range}
+                              </span>
+                            </span>
+                            <span
+                              className="block truncate text-[0.64rem] text-faint"
+                              style={{ fontStyle: vo.title ? 'normal' : 'italic' }}
+                            >
+                              {vo.title || 'Untitled cruise'}
+                            </span>
                           </span>
                           <span className="sr-only">{st.label}</span>
-                          <span className="flex-shrink-0 font-mono text-[0.58rem] tabular-nums text-faint group-hover:opacity-0">
-                            {fmtDate(voyageStartDate(vo))}
-                          </span>
                         </button>
                         {canEdit && (
-                          <div className="absolute right-1 flex items-center gap-0.5 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
+                          <div className="absolute right-1 flex items-center gap-0.5 rounded-md bg-rail px-0.5 opacity-0 shadow-[0_1px_3px_rgba(0,0,0,0.08)] transition-opacity focus-within:opacity-100 group-hover:opacity-100">
                             <button
                               type="button"
                               onClick={() => onCopyVoyage(file.name, vo.id)}
