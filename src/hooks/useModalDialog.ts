@@ -10,7 +10,9 @@ export function useModalDialog(dialogRef: RefObject<HTMLElement | null>, onClose
   // close) — hold it in a ref so the effect mounts exactly once per dialog
   // and the focus save/restore doesn't fire on re-renders.
   const closeRef = useRef(onClose);
-  closeRef.current = onClose;
+  useEffect(() => {
+    closeRef.current = onClose;
+  }, [onClose]);
   useEffect(() => {
     const prev = document.activeElement as HTMLElement | null;
     // Move focus into the dialog unless something inside (e.g. an autoFocus
