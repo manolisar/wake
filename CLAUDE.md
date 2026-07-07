@@ -201,10 +201,13 @@ split follows the lineup (DG1/DG2 stay HFO, DG3 MGO-locked, DG4→MGO) and honou
 e.g. with one HFO-capable DG offline the plant runs 1×HFO + 2×MGO. Boilers: **port 0.19 t/h**,
 **sailing 0.14 t/h**, both MGO, now editable ship-default + per-voyage settings (`portBoilerRate` /
 `seaBoilerRate`). In-port fuel is a policy setting `inPortFuel` (default MGO) forced on every DG in
-port + tendering via `harbourEngines`. **Behaviour shift to note (pending CE sign-off):** St/By
-previously ran a fixed `stby.fuelType` (MGO) with an MGO-escalation loop; it now inherits the sea
-lineup's HFO on DG1/DG2, so an existing all-MGO-standby setup shifts to a mixed HFO/MGO split —
-voyage total tonnage barely moves (SFOC is fuel-independent) but the HFO/MGO attribution changes.
+port + tendering via `harbourEngines`. **Behaviour shift (CE-confirmed 2026-07-07 — St/By runs the
+sea lineup, closed-loop):** St/By previously ran a fixed `stby.fuelType` (MGO) with an MGO-escalation
+loop; it now inherits the sea lineup's HFO on DG1/DG2, so an existing all-MGO-standby setup shifts to
+a mixed HFO/MGO split — voyage total tonnage barely moves (SFOC is fuel-independent) but the HFO/MGO
+attribution changes. The CE chose this (St/By keeps the sea fuel) over forcing harbour MGO on
+maneuvering; if that ever reverses, apply `harbourEngines(inPortFuel)` to St/By instead of
+`closeLoopEngines`.
 These replaced the pre-2026-07-07 `maneuverAuxKW` (2,000 kW flat) and 0.18 t/h port-only boiler; old
 snapshots flag stale and recalculate, and old files carrying `maneuverAuxKW` (or a pre-core snapshot
 lacking the per-phase `result`) drop it on read (tolerant normalizers).
@@ -235,7 +238,8 @@ document the divergence. **Documented divergences (CE assumptions, 2026-07-07):*
 0.19 t/h vs the reference's 0.18, the sailing boiler (reference has none), the thruster profile
 replacing the flat maneuvering aux, and the lineup-driven St/By/Port model (real closed-loop /
 harbour lineup with availability, replacing the reference's abstract count+fuel and the app's earlier
-MGO-escalation loop). The DG SFOC/load-sharing math itself remains golden-locked. **Pending CE
-sign-off:** the St/By MGO→HFO fuel-split shift for existing all-MGO-standby setups.
+MGO-escalation loop). The DG SFOC/load-sharing math itself remains golden-locked. **CE-confirmed
+2026-07-07:** St/By keeps the sea lineup's HFO (closed-loop), so existing all-MGO-standby setups
+re-attribute St/By burn from MGO to HFO (total tonnage unchanged).
 
 *Last updated: 2026-07-07.*
