@@ -29,7 +29,17 @@ const FUEL_COLOR: Record<FuelType, string> = {
   LSFO: 'var(--color-indigo)',
 };
 
-type ScalarKey = 'hotelLoad' | 'seaMargin' | 'sfocDet' | 'propAux' | 'thrusterIdleKW' | 'thrusterHighKW';
+const FUELS: FuelType[] = ['HFO', 'MGO', 'LSFO'];
+
+type ScalarKey =
+  | 'hotelLoad'
+  | 'seaMargin'
+  | 'sfocDet'
+  | 'propAux'
+  | 'thrusterIdleKW'
+  | 'thrusterHighKW'
+  | 'portBoilerRate'
+  | 'seaBoilerRate';
 
 const SCALARS: { key: ScalarKey; label: string; unit: string; step: number; hint: string }[] = [
   { key: 'hotelLoad', label: 'Hotel load', unit: 'kW', step: 100, hint: 'Accommodation & services' },
@@ -38,6 +48,8 @@ const SCALARS: { key: ScalarKey; label: string; unit: string; step: number; hint
   { key: 'propAux', label: 'Prop auxiliaries', unit: 'kW', step: 100, hint: 'Steering, ventilation — at sea & St/By' },
   { key: 'thrusterIdleKW', label: 'Thrusters idle', unit: 'kW', step: 100, hint: 'St/By except final 30 min (3×360 kW)' },
   { key: 'thrusterHighKW', label: 'Thrusters high', unit: 'kW', step: 500, hint: 'Final 30 min of St/By (3×3,000 kW)' },
+  { key: 'portBoilerRate', label: 'Port boiler', unit: 't/h', step: 0.01, hint: 'MGO while alongside' },
+  { key: 'seaBoilerRate', label: 'Sea boiler', unit: 't/h', step: 0.01, hint: 'MGO per sea hour' },
 ];
 
 function OverriddenPill({ onReset, disabled }: { onReset: () => void; disabled: boolean }) {
@@ -148,6 +160,8 @@ export function ConsumptionSettingsModal({
     propAux: R.propAux,
     thrusterIdleKW: R.thrusterIdleKW,
     thrusterHighKW: R.thrusterHighKW,
+    portBoilerRate: R.portBoilerRate,
+    seaBoilerRate: R.seaBoilerRate,
   };
 
   return (
@@ -315,7 +329,7 @@ export function ConsumptionSettingsModal({
                 </div>
               </div>
               <div className="mt-1.5 text-[0.58rem] text-faint">
-                Hotel-load DGs + fixed MGO boiler 0.20 t/h while alongside (0.14 t/h at sea).
+                Minimum DGs on the in-port fuel. Hotel-load DGs + the port boiler (rates above).
               </div>
             </div>
 
@@ -409,6 +423,42 @@ export function ConsumptionSettingsModal({
                 Used when a St/By phase has no distance and no per-leg MW override. Standby always
                 runs the real closed-loop DG lineup (from the DG cards above) — this DG count is
                 the minimum floor; the load pulls in more DGs as needed.
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-line p-3">
+              <div className={label}>
+                In-port fuel
+                {!onDefaults && draftOverrides.inPortFuel && (
+                  <OverriddenPill
+                    onReset={() =>
+                      setDraftOverrides((o) => {
+                        const next = { ...o };
+                        delete next.inPortFuel;
+                        return next;
+                      })
+                    }
+                    disabled={!canEditTab}
+                  />
+                )}
+              </div>
+              <select
+                aria-label="In-port fuel"
+                className={input}
+                value={view.inPortFuel}
+                disabled={!canEditTab}
+                onChange={(e) => {
+                  const v = e.target.value as FuelType;
+                  if (onDefaults) setDraftDefaults((d) => ({ ...d, inPortFuel: v }));
+                  else setDraftOverrides((o) => ({ ...o, inPortFuel: v }));
+                }}
+              >
+                {FUELS.map((f) => (
+                  <option key={f}>{f}</option>
+                ))}
+              </select>
+              <div className="mt-1.5 text-[0.58rem] text-faint">
+                Forced on every DG in port &amp; while tendering (emission compliance).
               </div>
             </div>
           </div>
