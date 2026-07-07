@@ -14,6 +14,7 @@ import {
   computeStbyConsumption,
   computePortConsumption,
   closeLoopEngines,
+  harbourEngines,
   PORT_BOILER_RATE_MT_PER_HR,
 } from './consumption';
 import { DEFAULT_CONSUMPTION_SETTINGS } from './engineDefaults';
@@ -84,6 +85,19 @@ describe('closeLoopEngines', () => {
   it('leaves DG4 alone when already on a compliant fuel', () => {
     const lsfo = engines.map((e) => (e.id === 4 ? { ...e, fuel: 'LSFO' as const } : e));
     expect(closeLoopEngines(lsfo).find((e) => e.id === 4)!.fuel).toBe('LSFO');
+  });
+});
+
+describe('harbourEngines', () => {
+  it('forces every available DG to the in-port fuel', () => {
+    const h = harbourEngines(settings.engines, 'MGO');
+    expect(h.every((e) => e.fuel === 'MGO')).toBe(true);
+  });
+  it('respects DG legality (DG3 has no HFO line) — falls back to a legal fuel', () => {
+    // Requesting HFO for the whole plant must not put DG3 (MGO-locked) on HFO.
+    const h = harbourEngines(settings.engines, 'HFO');
+    expect(h.find((e) => e.id === 3)!.fuel).toBe('MGO'); // DG3 stays legal
+    expect(h.find((e) => e.id === 1)!.fuel).toBe('HFO');
   });
 });
 

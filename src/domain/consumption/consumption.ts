@@ -26,6 +26,20 @@ export function closeLoopEngines(engines: EngineState[]): EngineState[] {
   );
 }
 
+/**
+ * In-port transform: force every DG to the compliant in-port fuel (default MGO),
+ * so a shore stay burns the harbour fuel regardless of the sea lineup. Respects
+ * each DG's bunker legality — a DG that can't take the requested fuel (DG3 has no
+ * HFO line) keeps the first fuel it legally can, preferring the requested one.
+ */
+export function harbourEngines(engines: EngineState[], inPortFuel: FuelType): EngineState[] {
+  return engines.map((e) => {
+    const cfg = engineConfigs.find((c) => c.id === e.id);
+    const fuel = cfg && cfg.allowedFuels.includes(inPortFuel) ? inPortFuel : cfg?.allowedFuels[0] ?? e.fuel;
+    return { ...e, fuel };
+  });
+}
+
 export interface StaticConsumptionResult {
   rate: number;
   perFuel: { hfo: number; mgo: number; lsfo: number };
