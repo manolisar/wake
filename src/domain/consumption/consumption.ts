@@ -48,6 +48,8 @@ export interface StaticConsumptionResult {
 }
 
 export interface PortConsumption {
+  /** DG breakdown from the shared plant core (harbour lineup). */
+  result: CalculationResult;
   /** DG (hotel load) rate, t/hr — boiler excluded */
   dgRate: number;
   /** Boiler rate, t/hr (MGO), constant while in port */
@@ -59,7 +61,6 @@ export interface PortConsumption {
   /** Total fuel for the given hours, MT (DG + boiler) */
   totalMT: number;
   insufficient: boolean;
-  availablePowerKW: number;
 }
 
 /**
@@ -248,32 +249,35 @@ export function computeStbyConsumption(
 }
 
 /**
- * Port consumption = DG hotel-load burn + an MGO boiler burn at the given
- * rate, both applied for the same `hours`. Single source of truth so the
- * port box, the voyage summary, and the export all roll up boiler identically.
+ * Port consumption = DG burn (via the shared plant core, run on the harbour
+ * lineup — every DG forced to `inPortFuel` where legal) + an MGO boiler burn
+ * at the given rate, both applied for the same `hours`. Single source of
+ * truth so the port box, the voyage summary, and the export all roll up
+ * boiler identically.
  */
 export function computePortConsumption(
   demandKW: number,
-  engineCount: number,
-  fuelType: FuelType,
+  engines: EngineState[],
+  inPortFuel: FuelType,
   sfocDet: number,
+  minEngines: number,
   boilerRate: number,
   hours: number
 ): PortConsumption {
-  const dg = computeStaticConsumption(demandKW, engineCount, fuelType, sfocDet);
+  const dg = computePlantConsumption(demandKW, harbourEngines(engines, inPortFuel), sfocDet, minEngines);
   const boilerMT = boilerRate * hours;
   const perFuelMT = {
-    hfo: dg.perFuel.hfo * hours,
-    mgo: dg.perFuel.mgo * hours + boilerMT,
-    lsfo: dg.perFuel.lsfo * hours,
+    hfo: dg.hfoRate * hours,
+    mgo: dg.mgoRate * hours + boilerMT,
+    lsfo: dg.lsfoRate * hours,
   };
   return {
-    dgRate: dg.rate,
+    result: dg,
+    dgRate: dg.totalRate,
     boilerRate,
     boilerMT,
     perFuelMT,
     totalMT: perFuelMT.hfo + perFuelMT.mgo + perFuelMT.lsfo,
     insufficient: dg.insufficient,
-    availablePowerKW: dg.availablePowerKW,
   };
 }

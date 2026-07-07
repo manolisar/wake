@@ -61,7 +61,6 @@ export interface CalculationResult {
 
 export interface PortSetup {
   engineCount: number;
-  fuelType: FuelType;
 }
 
 export interface TenderSetup {
@@ -69,7 +68,6 @@ export interface TenderSetup {
    *  CE-validated 2026-07-07: 11,000 kW on 2 DGs. */
   totalPowerKW: number;
   engineCount: number;
-  fuelType: FuelType;
 }
 
 export interface StbySetup {
@@ -170,6 +168,8 @@ export interface PortPhase extends PhaseConsumption {
    *  fixed total output on the tender DG count). Absent for normal port
    *  stays and in snapshots persisted before 2026-07-07. */
   tender?: boolean;
+  /** DG breakdown from the shared plant core (harbour lineup). */
+  result: CalculationResult;
 }
 
 export interface LegConsumption {

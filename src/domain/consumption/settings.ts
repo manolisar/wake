@@ -86,7 +86,6 @@ export function normalizeSettings(
         R.engineCount.min,
         R.engineCount.max
       ),
-      fuelType: fuel(port.fuelType, base.port.fuelType),
     },
     tender: {
       totalPowerKW: clamp(
@@ -99,7 +98,6 @@ export function normalizeSettings(
         R.engineCount.min,
         R.engineCount.max
       ),
-      fuelType: fuel(tender.fuelType, base.tender.fuelType),
     },
     stby: {
       avgPowerMW: clamp(num(stby.avgPowerMW, base.stby.avgPowerMW), R.avgPowerMW.min, R.avgPowerMW.max),
@@ -170,7 +168,6 @@ export function normalizeOverrides(v: unknown): ConsumptionOverrides | undefined
     const port: ConsumptionOverrides['port'] = {};
     if (p.engineCount != null && Number.isFinite(Number(p.engineCount)))
       port.engineCount = clamp(Math.round(Number(p.engineCount)), R.engineCount.min, R.engineCount.max);
-    if (FUELS.includes(p.fuelType as FuelType)) port.fuelType = p.fuelType as FuelType;
     if (Object.keys(port).length) out.port = port;
   }
   if (o.tender && typeof o.tender === 'object') {
@@ -180,7 +177,6 @@ export function normalizeOverrides(v: unknown): ConsumptionOverrides | undefined
       tender.totalPowerKW = clamp(Number(t.totalPowerKW), R.tenderPowerKW.min, R.tenderPowerKW.max);
     if (t.engineCount != null && Number.isFinite(Number(t.engineCount)))
       tender.engineCount = clamp(Math.round(Number(t.engineCount)), R.engineCount.min, R.engineCount.max);
-    if (FUELS.includes(t.fuelType as FuelType)) tender.fuelType = t.fuelType as FuelType;
     if (Object.keys(tender).length) out.tender = tender;
   }
   if (o.stby && typeof o.stby === 'object') {

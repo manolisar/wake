@@ -75,7 +75,7 @@ describe('computeVoyageConsumption — voyage 586 fixture', () => {
     const port = basseterre.portStay!;
     expect(port.hours).toBeCloseTo(9, 5);
     const expected = computePortConsumption(
-      settings.hotelLoad, settings.port.engineCount, settings.port.fuelType, settings.sfocDet, settings.portBoilerRate, 9
+      settings.hotelLoad, settings.engines, settings.inPortFuel, settings.sfocDet, settings.port.engineCount, settings.portBoilerRate, 9
     );
     expect(port.totalMT).toBeCloseTo(expected.totalMT, 10);
     expect(port.boilerMT).toBeCloseTo(0.19 * 9, 10);
@@ -123,7 +123,7 @@ describe('tender stays (Type: Tender)', () => {
     expect(stay.tender).toBe(true);
     expect(stay.hours).toBeCloseTo(9, 5);
     const expected = computePortConsumption(
-      settings.tender.totalPowerKW, settings.tender.engineCount, settings.tender.fuelType, settings.sfocDet, settings.portBoilerRate, 9
+      settings.tender.totalPowerKW, settings.engines, settings.inPortFuel, settings.sfocDet, settings.tender.engineCount, settings.portBoilerRate, 9
     );
     expect(settings.tender.totalPowerKW).toBe(11000); // CE 2026-07-07
     expect(settings.tender.engineCount).toBe(2);
@@ -137,7 +137,7 @@ describe('tender stays (Type: Tender)', () => {
     const stay = r.legs.find((l) => l.port.startsWith('Basseterre'))!.portStay!;
     expect(stay.tender).toBeUndefined();
     const expected = computePortConsumption(
-      settings.hotelLoad, settings.port.engineCount, settings.port.fuelType, settings.sfocDet, settings.portBoilerRate, 9
+      settings.hotelLoad, settings.engines, settings.inPortFuel, settings.sfocDet, settings.port.engineCount, settings.portBoilerRate, 9
     );
     expect(stay.totalMT).toBeCloseTo(expected.totalMT, 10);
   });

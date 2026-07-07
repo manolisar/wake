@@ -127,14 +127,14 @@ describe('computeStaticConsumption (golden cross-check)', () => {
   });
 });
 
-describe('computePortConsumption (DG + boiler)', () => {
-  it('8 MW hotel / 1 DG / MGO / det 2 / 10 h / boiler 0.19 → 18.2726 MT', () => {
-    const r = computePortConsumption(8000, 1, 'MGO', 2, 0.19, 10);
-    expect(r.dgRate).toBeCloseTo(1.6472630857142858, 10); // golden DG burn (unchanged)
-    expect(r.boilerMT).toBeCloseTo(0.19 * 10, 10);
-    const expectedMT = 1.6472630857142858 * 10 + 1.9;
-    expect(r.perFuelMT.mgo).toBeCloseTo(expectedMT, 10);
-    expect(r.totalMT).toBeCloseTo(expectedMT, 10);
+describe('computePortConsumption (DG core + boiler)', () => {
+  it('8 MW hotel / harbour MGO / floor 1 / det 2 / 10 h / boiler 0.19 → preserved DG golden', () => {
+    const r = computePortConsumption(8000, settings.engines, 'MGO', 2, 1, 0.19, 10);
+    expect(r.dgRate).toBeCloseTo(1.6472630857142858, 10); // 1-DG-MGO golden preserved
+    expect(r.boilerMT).toBeCloseTo(1.9, 10);
+    expect(r.totalMT).toBeCloseTo(1.6472630857142858 * 10 + 1.9, 10);
+    expect(r.result.numRunning).toBe(1);
+    expect(r.result.engineResults.find((e) => e.status === 'RUNNING')!.fuel).toBe('MGO');
   });
 });
 

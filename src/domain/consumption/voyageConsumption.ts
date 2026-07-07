@@ -217,10 +217,10 @@ export function computeVoyageConsumption(
       const isTender = leg.type === 'Tender';
       const p = isTender
         ? computePortConsumption(
-            settings.tender.totalPowerKW, settings.tender.engineCount, settings.tender.fuelType, settings.sfocDet, settings.portBoilerRate, hours
+            settings.tender.totalPowerKW, settings.engines, settings.inPortFuel, settings.sfocDet, settings.tender.engineCount, settings.portBoilerRate, hours
           )
         : computePortConsumption(
-            settings.hotelLoad, settings.port.engineCount, settings.port.fuelType, settings.sfocDet, settings.portBoilerRate, hours
+            settings.hotelLoad, settings.engines, settings.inPortFuel, settings.sfocDet, settings.port.engineCount, settings.portBoilerRate, hours
           );
       if (p.insufficient) {
         warnings.push(
@@ -238,6 +238,7 @@ export function computeVoyageConsumption(
         insufficient: p.insufficient,
         boilerMT: p.boilerMT,
         dgRate: p.dgRate,
+        result: p.result,
         ...(isTender ? { tender: true } : null),
       };
       totals.portHrs += hours;

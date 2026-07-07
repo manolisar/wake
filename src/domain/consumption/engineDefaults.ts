@@ -35,8 +35,8 @@ export const DEFAULT_CONSUMPTION_SETTINGS: ConsumptionSettings = {
     { id: 3, available: true, fuel: 'MGO' },
     { id: 4, available: true, fuel: 'HFO' },
   ],
-  port: { engineCount: 1, fuelType: 'MGO' },
-  tender: { totalPowerKW: 11000, engineCount: 2, fuelType: 'MGO' }, // CE 2026-07-07
+  port: { engineCount: 1 },
+  tender: { totalPowerKW: 11000, engineCount: 2 }, // CE 2026-07-07
   stby: { avgPowerMW: 10, engineCount: 2, fuelType: 'MGO' },
   thrusterIdleKW: 1080, // 3 × 360 kW, CE-validated 2026-07-07
   thrusterHighKW: 9000, // 3 × 3,000 kW, final 30 min of St/By

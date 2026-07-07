@@ -264,9 +264,11 @@ export function ConsumptionReport({
                 </b>
               ))}
             </span>
-            <span>Port <b className="font-mono text-ink">{s.port.engineCount} DG · {s.port.fuelType}</b></span>
-            <span>Tender <b className="font-mono text-ink">{s.tender.engineCount} DG · {(s.tender.totalPowerKW / 1000).toFixed(1)} MW · {s.tender.fuelType}</b></span>
-            <span>St/By fallback <b className="font-mono text-ink">{s.stby.avgPowerMW} MW · {s.stby.engineCount} DG · {s.stby.fuelType}</b></span>
+            <span>In-port fuel <b className="font-mono text-ink">{s.inPortFuel}</b></span>
+            <span>Port <b className="font-mono text-ink">{s.port.engineCount} DG min</b></span>
+            <span>Tender <b className="font-mono text-ink">{s.tender.engineCount} DG · {(s.tender.totalPowerKW / 1000).toFixed(1)} MW</b></span>
+            <span>St/By fallback <b className="font-mono text-ink">{s.stby.avgPowerMW} MW · {s.stby.engineCount} DG min</b></span>
+            <span>Boiler <b className="font-mono text-ink">{s.portBoilerRate} / {s.seaBoilerRate} t/h</b></span>
             {offline.length > 0 && <span className="text-amber">Offline: {offline.join(', ')}</span>}
           </div>
         </div>

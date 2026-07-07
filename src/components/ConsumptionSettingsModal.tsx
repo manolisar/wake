@@ -299,7 +299,7 @@ export function ConsumptionSettingsModal({
                   <OverriddenPill onReset={() => resetGroup('port')} disabled={!canEditTab} />
                 )}
               </div>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 gap-2">
                 <div>
                   <label htmlFor="fuel-port-count" className={label}>
                     DGs
@@ -315,22 +315,6 @@ export function ConsumptionSettingsModal({
                     onChange={(e) => setGroup('port', { engineCount: Number(e.target.value) })}
                   />
                 </div>
-                <div>
-                  <label htmlFor="fuel-port-fuel" className={label}>
-                    Fuel
-                  </label>
-                  <select
-                    id="fuel-port-fuel"
-                    className={input}
-                    value={view.port.fuelType}
-                    disabled={!canEditTab}
-                    onChange={(e) => setGroup('port', { fuelType: e.target.value as FuelType })}
-                  >
-                    {FUELS.map((f) => (
-                      <option key={f}>{f}</option>
-                    ))}
-                  </select>
-                </div>
               </div>
               <div className="mt-1.5 text-[0.58rem] text-faint">
                 Hotel-load DGs + fixed MGO boiler 0.20 t/h while alongside (0.14 t/h at sea).
@@ -344,7 +328,7 @@ export function ConsumptionSettingsModal({
                   <OverriddenPill onReset={() => resetGroup('tender')} disabled={!canEditTab} />
                 )}
               </div>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label htmlFor="fuel-tender-kw" className={label}>
                     Total · kW
@@ -375,22 +359,6 @@ export function ConsumptionSettingsModal({
                     disabled={!canEditTab}
                     onChange={(e) => setGroup('tender', { engineCount: Number(e.target.value) })}
                   />
-                </div>
-                <div>
-                  <label htmlFor="fuel-tender-fuel" className={label}>
-                    Fuel
-                  </label>
-                  <select
-                    id="fuel-tender-fuel"
-                    className={input}
-                    value={view.tender.fuelType}
-                    disabled={!canEditTab}
-                    onChange={(e) => setGroup('tender', { fuelType: e.target.value as FuelType })}
-                  >
-                    {FUELS.map((f) => (
-                      <option key={f}>{f}</option>
-                    ))}
-                  </select>
                 </div>
               </div>
               <div className="mt-1.5 text-[0.58rem] text-faint">

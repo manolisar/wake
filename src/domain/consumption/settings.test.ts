@@ -88,8 +88,8 @@ describe('normalizeOverrides', () => {
   });
 
   it('keeps only valid keys, clamped', () => {
-    const o = normalizeOverrides({ hotelLoad: 30000, bogus: 1, port: { fuelType: 'LSFO' } });
-    expect(o).toEqual({ hotelLoad: 20000, port: { fuelType: 'LSFO' } });
+    const o = normalizeOverrides({ hotelLoad: 30000, bogus: 1, port: { engineCount: 3 } });
+    expect(o).toEqual({ hotelLoad: 20000, port: { engineCount: 3 } });
   });
 
   it('parses and clamps tender overrides', () => {
