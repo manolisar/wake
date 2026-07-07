@@ -45,6 +45,10 @@ export interface LegView {
   portMinNum: number | null; // port stay minutes (Dep − Arr)
   stbyArrSpeedNum: number | null; // maneuvering speed, kn (dist ÷ time)
   stbyDepSpeedNum: number | null;
+  /** True when this row's port time spans from the PREVIOUS row's arrival —
+   *  an overnight stay entered as two date rows (arrive on one, depart the
+   *  next). Such a row has no passage of its own by design. */
+  portOvernight: boolean;
 }
 
 export interface Summary {
@@ -82,7 +86,7 @@ export function computeVoyage(v: Voyage | undefined): VoyageComputation {
   let openLoopMin = 0;
   let seaCondMin = 0;
 
-  const legViews = v.legs.map((leg: Leg): LegView => {
+  const legViews = v.legs.map((leg: Leg, i: number): LegView => {
     const isPort = leg.type === 'Port' || leg.type === 'Tender';
     const d = Number(leg.dist);
     if (isPort && !isNaN(d) && leg.dist !== '') totalDist += d;
@@ -131,9 +135,31 @@ export function computeVoyage(v: Voyage | undefined): VoyageComputation {
       const depStbyMin = fMin != null && dpMin != null && fMin >= dpMin ? fMin - dpMin : null;
       let lPort = 0;
       let hasPort = false;
+      let portOvernight = false;
       if (dpMin != null && aMin != null && dpMin >= aMin) {
         lPort = dpMin - aMin;
         hasPort = true;
+      } else if (dpMin != null && aMin == null && eMin == null) {
+        // Overnight in port: the stay spans two date rows — arrival on one
+        // row, departure on the next. When this row has a Dep but no ETA/Arr
+        // and the previous row is a port call that arrived but never
+        // departed, port time runs from that arrival to this departure
+        // across the date change.
+        const prev = i > 0 ? v.legs[i - 1] : undefined;
+        if (
+          prev &&
+          (prev.type === 'Port' || prev.type === 'Tender') &&
+          hhmmToMin(prev.dep) == null &&
+          hhmmToMin(prev.faw) == null
+        ) {
+          const from = instUTC(prev, hhmmToMin(prev.arr));
+          const to = instUTC(leg, dpMin);
+          if (from != null && to != null && to > from) {
+            lPort = to - from;
+            hasPort = true;
+            portOvernight = true;
+          }
+        }
       }
       stbyMin += (arrStbyMin ?? 0) + (depStbyMin ?? 0);
       portMin += lPort;
@@ -180,6 +206,7 @@ export function computeVoyage(v: Voyage | undefined): VoyageComputation {
         portMinNum: hasPort ? lPort : null,
         stbyArrSpeedNum: arrStbySpeed,
         stbyDepSpeedNum: depStbySpeed,
+        portOvernight,
         ...daylight(leg),
       };
       return view;
@@ -210,6 +237,7 @@ export function computeVoyage(v: Voyage | undefined): VoyageComputation {
       portMinNum: null,
       stbyArrSpeedNum: null,
       stbyDepSpeedNum: null,
+      portOvernight: false,
       ...daylight(leg),
     };
   });

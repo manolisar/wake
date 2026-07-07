@@ -23,7 +23,11 @@ mid-crossing timezone change is exact. Two solve directions per port leg:
 
 It also splits the maneuvering (**St/By**) phase per port call into **Arrival** (`Arr − ETA`,
 pilot→berth) and **Departure** (`FAW − Dep`, berth→pilot); each takes a manual distance and the app
-computes the slow maneuvering speed (distance ÷ that time).
+computes the slow maneuvering speed (distance ÷ that time). **Overnight port stays** span two date
+rows (as in the Excel template): the arrival row has Arr but no Dep/FAW, the next row has Dep/FAW
+but no ETA/Arr — port time then runs from the first row's Arr to the second row's Dep
+(`portOvernight` on the LegView; the continuation row has no passage of its own, and the FAW carry
+for the next passage comes from the departure row).
 
 **Folder-backed (the live record).** On sign-in the operator picks a **folder**; every `.json` in it
 is read and shown as a **file → voyages tree** (files chronological, voyages by start date). Edits,

@@ -181,11 +181,13 @@ export function computeVoyageConsumption(
       totals.seaHrs += hours;
       totals.boilerMT += seaBoilerMT;
     } else {
-      // Warn only for follow-on port calls — the first port has no passage.
+      // Warn only for follow-on port calls — the first port has no passage,
+      // and an overnight continuation row (port time from the previous row's
+      // arrival) has none by design.
       const hasPrevPort = voyage.legs.some(
         (l, j) => j < i && (l.type === 'Port' || l.type === 'Tender')
       );
-      if (hasPrevPort) {
+      if (hasPrevPort && !view.portOvernight) {
         warnings.push(`${label}: passage not computable (missing times/speed) — sea burn skipped`);
       }
     }

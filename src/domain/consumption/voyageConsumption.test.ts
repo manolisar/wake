@@ -144,6 +144,28 @@ describe('tender stays (Type: Tender)', () => {
   });
 });
 
+describe('overnight port stays (two date rows)', () => {
+  it('the departure row carries the full overnight stay and raises no passage warning', () => {
+    const voyage = clone(seed['586']);
+    const i = voyage.legs.findIndex((l) => l.port.startsWith('Basseterre'));
+    const arrRow = voyage.legs[i]; // Arr 09:00 on 2026-12-25
+    const depRow = {
+      ...clone(voyage)!.legs[i],
+      date: '2026-12-26', eta: '', arr: '', dist: '', stbyArrDist: '', openLoop: '', seaCond: '',
+    };
+    arrRow.dep = '';
+    arrRow.faw = '';
+    voyage.legs.splice(i + 1, 0, depRow);
+    const r = computeVoyageConsumption(voyage, settings, { by: 'Test' });
+    const stay = r.legs.find((l) => l.legIndex === i + 1)!.portStay!;
+    expect(stay.hours).toBeCloseTo(33, 5); // 09:00 → 18:00 next day
+    expect(r.legs.find((l) => l.legIndex === i)!.portStay).toBeUndefined();
+    expect(
+      r.warnings.some((w) => w.includes('Basseterre') && w.includes('passage not computable'))
+    ).toBe(false);
+  });
+});
+
 describe('thrusterAvgKW (CE maneuvering profile)', () => {
   it('weights idle hours against the final-30-min high output', () => {
     // 2 h: 1.5 h × 1,080 + 0.5 h × 9,000 = 6,120 kWh → 3,060 kW average.
