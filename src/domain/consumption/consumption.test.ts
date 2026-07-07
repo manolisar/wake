@@ -129,7 +129,7 @@ describe('computeStaticConsumption (golden cross-check)', () => {
 
 describe('computePortConsumption (DG core + boiler)', () => {
   it('8 MW hotel / harbour MGO / floor 1 / det 2 / 10 h / boiler 0.19 → preserved DG golden', () => {
-    const r = computePortConsumption(8000, settings.engines, 'MGO', 2, 1, 0.19, 10);
+    const r = computePortConsumption(8000, settings.engines, 'MGO', { sfocDet: 2, minEngines: 1, boilerRate: 0.19, hours: 10 });
     expect(r.dgRate).toBeCloseTo(1.6472630857142858, 10); // 1-DG-MGO golden preserved
     expect(r.boilerMT).toBeCloseTo(1.9, 10);
     expect(r.totalMT).toBeCloseTo(1.6472630857142858 * 10 + 1.9, 10);

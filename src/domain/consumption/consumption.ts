@@ -259,11 +259,9 @@ export function computePortConsumption(
   demandKW: number,
   engines: EngineState[],
   inPortFuel: FuelType,
-  sfocDet: number,
-  minEngines: number,
-  boilerRate: number,
-  hours: number
+  opts: { sfocDet: number; minEngines: number; boilerRate: number; hours: number }
 ): PortConsumption {
+  const { sfocDet, minEngines, boilerRate, hours } = opts;
   const dg = computePlantConsumption(demandKW, harbourEngines(engines, inPortFuel), sfocDet, minEngines);
   const boilerMT = boilerRate * hours;
   const perFuelMT = {

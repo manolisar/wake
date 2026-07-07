@@ -216,12 +216,12 @@ export function computeVoyageConsumption(
       // output) instead of the plain hotel load.
       const isTender = leg.type === 'Tender';
       const p = isTender
-        ? computePortConsumption(
-            settings.tender.totalPowerKW, settings.engines, settings.inPortFuel, settings.sfocDet, settings.tender.engineCount, settings.portBoilerRate, hours
-          )
-        : computePortConsumption(
-            settings.hotelLoad, settings.engines, settings.inPortFuel, settings.sfocDet, settings.port.engineCount, settings.portBoilerRate, hours
-          );
+        ? computePortConsumption(settings.tender.totalPowerKW, settings.engines, settings.inPortFuel, {
+            sfocDet: settings.sfocDet, minEngines: settings.tender.engineCount, boilerRate: settings.portBoilerRate, hours,
+          })
+        : computePortConsumption(settings.hotelLoad, settings.engines, settings.inPortFuel, {
+            sfocDet: settings.sfocDet, minEngines: settings.port.engineCount, boilerRate: settings.portBoilerRate, hours,
+          });
       if (p.insufficient) {
         warnings.push(
           isTender

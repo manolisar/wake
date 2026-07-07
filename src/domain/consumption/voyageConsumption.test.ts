@@ -74,9 +74,9 @@ describe('computeVoyageConsumption — voyage 586 fixture', () => {
   it('port stay = hotel DG burn + boiler for Dep−Arr hours', () => {
     const port = basseterre.portStay!;
     expect(port.hours).toBeCloseTo(9, 5);
-    const expected = computePortConsumption(
-      settings.hotelLoad, settings.engines, settings.inPortFuel, settings.sfocDet, settings.port.engineCount, settings.portBoilerRate, 9
-    );
+    const expected = computePortConsumption(settings.hotelLoad, settings.engines, settings.inPortFuel, {
+      sfocDet: settings.sfocDet, minEngines: settings.port.engineCount, boilerRate: settings.portBoilerRate, hours: 9,
+    });
     expect(port.totalMT).toBeCloseTo(expected.totalMT, 10);
     expect(port.boilerMT).toBeCloseTo(0.19 * 9, 10);
   });
@@ -122,9 +122,9 @@ describe('tender stays (Type: Tender)', () => {
     const stay = r.legs.find((l) => l.port.startsWith('Basseterre'))!.portStay!;
     expect(stay.tender).toBe(true);
     expect(stay.hours).toBeCloseTo(9, 5);
-    const expected = computePortConsumption(
-      settings.tender.totalPowerKW, settings.engines, settings.inPortFuel, settings.sfocDet, settings.tender.engineCount, settings.portBoilerRate, 9
-    );
+    const expected = computePortConsumption(settings.tender.totalPowerKW, settings.engines, settings.inPortFuel, {
+      sfocDet: settings.sfocDet, minEngines: settings.tender.engineCount, boilerRate: settings.portBoilerRate, hours: 9,
+    });
     expect(settings.tender.totalPowerKW).toBe(11000); // CE 2026-07-07
     expect(settings.tender.engineCount).toBe(2);
     expect(stay.totalMT).toBeCloseTo(expected.totalMT, 10);
@@ -136,9 +136,9 @@ describe('tender stays (Type: Tender)', () => {
     const r = computeVoyageConsumption(seed['586'], settings, { by: 'Test' });
     const stay = r.legs.find((l) => l.port.startsWith('Basseterre'))!.portStay!;
     expect(stay.tender).toBeUndefined();
-    const expected = computePortConsumption(
-      settings.hotelLoad, settings.engines, settings.inPortFuel, settings.sfocDet, settings.port.engineCount, settings.portBoilerRate, 9
-    );
+    const expected = computePortConsumption(settings.hotelLoad, settings.engines, settings.inPortFuel, {
+      sfocDet: settings.sfocDet, minEngines: settings.port.engineCount, boilerRate: settings.portBoilerRate, hours: 9,
+    });
     expect(stay.totalMT).toBeCloseTo(expected.totalMT, 10);
   });
 });
