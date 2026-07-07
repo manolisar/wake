@@ -56,34 +56,32 @@ export interface PortConsumption {
   availablePowerKW: number;
 }
 
-export function computeConsumption(
-  speed: number,
+/**
+ * The plant core: given a total power demand, a DG lineup, SFOC deterioration,
+ * and a minimum-DG floor, select engines (fuel-priority), load-share, and burn
+ * fuel. The single place selection + SFOC live. Pure.
+ */
+export function computePlantConsumption(
+  totalKW: number,
   engines: EngineState[],
-  settings: VesselSettings
+  sfocDet: number,
+  minEngines: number
 ): CalculationResult {
   const allEngines = getEngineWithLimits(engines);
-  const propKW = interpPropPower(speed);
-  const propWithMargin = propKW * (1 + settings.seaMargin / 100);
-  const propAux = speed > 0 ? settings.propAux : 0;
-  const totalKW = propWithMargin + propAux + settings.hotelLoad;
-
   const { selected: runningEngines, allAvailable, insufficient } = selectEngines(
     allEngines,
     totalKW,
-    speed > 0 ? 2 : 1
+    minEngines
   );
   const numRunning = runningEngines.length;
   const runningIds = new Set(runningEngines.map((e) => e.id));
-
   const engineLoads = distributeLoad(runningEngines, totalKW);
 
   let hfoRate = 0, mgoRate = 0, lsfoRate = 0;
-
   runningEngines.forEach((e) => {
     const kw = engineLoads.get(e.id) || 0;
     const lf = kw / NOMINAL_KW;
-    const baseSFOC = interpSFOC(lf);
-    const sfoc = baseSFOC * (1 + settings.sfocDet / 100);
+    const sfoc = interpSFOC(lf) * (1 + sfocDet / 100);
     const cons = (sfoc * kw) / 1e6;
     if (e.fuel === 'HFO') hfoRate += cons;
     else if (e.fuel === 'LSFO') lsfoRate += cons;
@@ -100,8 +98,7 @@ export function computeConsumption(
     if (runningIds.has(eng.id)) {
       const kw = engineLoads.get(eng.id) || 0;
       const lf = kw / NOMINAL_KW;
-      const baseSFOC = interpSFOC(lf);
-      const sfoc = baseSFOC * (1 + settings.sfocDet / 100);
+      const sfoc = interpSFOC(lf) * (1 + sfocDet / 100);
       return {
         id: eng.id, status: 'RUNNING' as const, loadKW: kw, loadFraction: lf,
         loadLimit: eng.loadLimit, overloaded: lf > eng.loadLimit,
@@ -117,7 +114,7 @@ export function computeConsumption(
   const avgLoadPercent = numRunning > 0 ? (totalKW / (numRunning * NOMINAL_KW)) * 100 : 0;
 
   return {
-    propPowerKW: propWithMargin + propAux,
+    propPowerKW: 0, // set by the sea wrapper; irrelevant for static phases
     totalPowerKW: totalKW,
     avgLoadPercent,
     engineResults,
@@ -130,6 +127,19 @@ export function computeConsumption(
     mgoRunning: runningEngines.filter((e) => e.fuel === 'MGO').length,
     lsfoRunning: runningEngines.filter((e) => e.fuel === 'LSFO').length,
   };
+}
+
+export function computeConsumption(
+  speed: number,
+  engines: EngineState[],
+  settings: VesselSettings
+): CalculationResult {
+  const propKW = interpPropPower(speed);
+  const propWithMargin = propKW * (1 + settings.seaMargin / 100);
+  const propAux = speed > 0 ? settings.propAux : 0;
+  const totalKW = propWithMargin + propAux + settings.hotelLoad;
+  const r = computePlantConsumption(totalKW, engines, settings.sfocDet, speed > 0 ? 2 : 1);
+  return { ...r, propPowerKW: propWithMargin + propAux };
 }
 
 /** Compute fuel consumption for port/standby (no speed, custom power) */

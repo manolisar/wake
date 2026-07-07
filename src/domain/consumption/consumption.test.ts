@@ -9,6 +9,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   computeConsumption,
+  computePlantConsumption,
   computeStaticConsumption,
   computeStbyConsumption,
   computePortConsumption,
@@ -52,6 +53,23 @@ describe('computeConsumption (golden cross-check vs voyage-planner)', () => {
     const r = computeConsumption(0, engines, settings);
     expect(r.totalPowerKW).toBeCloseTo(settings.hotelLoad, 6);
     expect(r.numRunning).toBe(1);
+  });
+});
+
+describe('computePlantConsumption (shared core)', () => {
+  it('given a fixed demand, selects + load-shares like the sea path', () => {
+    // 20456 kW is the total the speed-15 sea golden feeds the plant.
+    const wl = settings.engines;
+    const r = computePlantConsumption(20456, wl, settings.sfocDet, 2);
+    expect(r.numRunning).toBe(2);
+    expect(r.hfoRate).toBeCloseTo(4.199129047136, 10);
+    expect(r.totalRate).toBeCloseTo(4.199129047136, 10);
+  });
+  it('honours availability — DG1 offline shifts the mix', () => {
+    const noDg1 = settings.engines.map((e) => (e.id === 1 ? { ...e, available: false } : e));
+    const r = computePlantConsumption(20456, noDg1, settings.sfocDet, 2);
+    expect(r.engineResults.find((e) => e.id === 1)!.status).toBe('OFFLINE');
+    expect(r.numRunning).toBe(2); // DG2 (HFO) + next by priority
   });
 });
 
