@@ -100,8 +100,9 @@ describe('computePortConsumption (DG golden cross-check, boiler 0.20 per CE)', (
     expect(r.dgRate).toBeCloseTo(1.6472630857142858, 10); // golden (reference engine)
     expect(r.boilerMT).toBeCloseTo(PORT_BOILER_RATE_MT_PER_HR * 10, 10);
     expect(r.boilerMT).toBeCloseTo(2.0, 10);
-    expect(r.perFuelMT.mgo).toBeCloseTo(18.472630857142858, 10);
-    expect(r.totalMT).toBeCloseTo(18.472630857142858, 10);
+    const expectedMT = 1.6472630857142858 * 10 + 2.0; // golden DG burn + boiler
+    expect(r.perFuelMT.mgo).toBeCloseTo(expectedMT, 10);
+    expect(r.totalMT).toBeCloseTo(expectedMT, 10);
   });
 });
 
