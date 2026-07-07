@@ -124,6 +124,28 @@ function normalizeVoyage(v: Voyage, id: string): Voyage {
   };
 }
 
+// True when a phase carries a real CalculationResult (has an engineResults
+// array). The report dereferences these, so a snapshot missing one would crash.
+const hasResult = (p: unknown): boolean =>
+  !!p && typeof p === 'object' &&
+  Array.isArray((p as { engineResults?: unknown }).engineResults);
+
+// Every phase the report reads a CalculationResult off must have one. Snapshots
+// from builds before the shared-plant-core rewrite lack these fields (St/By in
+// particular), so the whole snapshot is dropped → the report shows its empty
+// state and the user recalculates. Sea/port are guarded defensively too.
+function snapshotPhasesComplete(legs: unknown[]): boolean {
+  return legs.every((leg) => {
+    if (!leg || typeof leg !== 'object') return true;
+    const l = leg as Record<string, unknown>;
+    if (l.sea && !hasResult((l.sea as Record<string, unknown>).openResult)) return false;
+    if (l.stbyArr && !hasResult((l.stbyArr as Record<string, unknown>).result)) return false;
+    if (l.stbyDep && !hasResult((l.stbyDep as Record<string, unknown>).result)) return false;
+    if (l.portStay && !hasResult((l.portStay as Record<string, unknown>).result)) return false;
+    return true;
+  });
+}
+
 // A persisted consumption snapshot is display data — trust its numbers but
 // verify the envelope so a hand-edited blob can't crash the report. Anything
 // structurally off is dropped (the user just recalculates).
@@ -139,6 +161,7 @@ function normalizeConsumptionSnapshot(v: unknown): VoyageConsumption | undefined
   ) {
     return undefined;
   }
+  if (!snapshotPhasesComplete(o.legs)) return undefined;
   return {
     computedAt: o.computedAt,
     by: typeof o.by === 'string' ? o.by : '',

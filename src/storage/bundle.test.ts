@@ -82,6 +82,35 @@ describe('bundle v2 — consumption fields', () => {
     expect(back.consumptionDefaults).toEqual(DEFAULT_CONSUMPTION_SETTINGS);
   });
 
+  it('keeps a snapshot whose phases all carry their CalculationResult', () => {
+    const voyages = JSON.parse(JSON.stringify(seed)) as typeof seed;
+    voyages['586'].consumption = computeVoyageConsumption(
+      voyages['586'],
+      DEFAULT_CONSUMPTION_SETTINGS,
+      { by: 'Test' }
+    );
+    // Sanity: the fixture really does produce St/By phases with a result.
+    expect(
+      voyages['586'].consumption.legs.some((l) => l.stbyArr?.result || l.stbyDep?.result)
+    ).toBe(true);
+    const back = parseBundle(JSON.stringify(buildBundle(voyages, '586')));
+    expect(back.voyages['586'].consumption).toBeDefined();
+  });
+
+  it('drops a consumption snapshot whose St/By phase predates the result field', () => {
+    const voyages = JSON.parse(JSON.stringify(seed)) as typeof seed;
+    const snap = computeVoyageConsumption(voyages['586'], DEFAULT_CONSUMPTION_SETTINGS, {
+      by: 'Test',
+    });
+    // Simulate an older build's snapshot: strip `result` off a St/By phase.
+    const legWithStby = snap.legs.find((l) => l.stbyArr || l.stbyDep)!;
+    const phase = (legWithStby.stbyArr ?? legWithStby.stbyDep)! as Record<string, unknown>;
+    delete phase.result;
+    voyages['586'].consumption = snap;
+    const back = parseBundle(JSON.stringify(buildBundle(voyages, '586')));
+    expect(back.voyages['586'].consumption).toBeUndefined();
+  });
+
   it('keeps per-leg St/By power overrides through the leg normalizer', () => {
     const voyages = JSON.parse(JSON.stringify(seed)) as typeof seed;
     voyages['586'].legs[3].stbyArrPowerMW = '14';
