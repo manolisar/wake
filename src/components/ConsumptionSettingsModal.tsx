@@ -35,7 +35,7 @@ const SCALARS: { key: ScalarKey; label: string; unit: string; step: number; hint
   { key: 'hotelLoad', label: 'Hotel load', unit: 'kW', step: 100, hint: 'Accommodation & services' },
   { key: 'seaMargin', label: 'Sea margin', unit: '%', step: 1, hint: 'Weather / hull degradation' },
   { key: 'sfocDet', label: 'SFOC deterioration', unit: '%', step: 0.5, hint: 'Engine wear vs FAT curve' },
-  { key: 'propAux', label: 'Prop auxiliaries', unit: 'kW', step: 100, hint: 'Steering, ventilation at sea' },
+  { key: 'propAux', label: 'Prop auxiliaries', unit: 'kW', step: 100, hint: 'Steering, ventilation — at sea & St/By' },
   { key: 'thrusterIdleKW', label: 'Thrusters idle', unit: 'kW', step: 100, hint: 'St/By except final 30 min (3×360 kW)' },
   { key: 'thrusterHighKW', label: 'Thrusters high', unit: 'kW', step: 500, hint: 'Final 30 min of St/By (3×3,000 kW)' },
 ];

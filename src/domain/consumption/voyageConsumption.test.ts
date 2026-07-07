@@ -57,7 +57,8 @@ describe('computeVoyageConsumption — voyage 586 fixture', () => {
     // 1 h phase: 30 min idle (1,080 kW) + final 30 min high (9,000 kW) → 5,040 kW avg.
     const thrusters = thrusterAvgKW(1, settings);
     expect(thrusters).toBeCloseTo(5040, 8);
-    const expectedKW = interpPropPower(11) + thrusters + settings.hotelLoad;
+    // Prop auxiliaries run during St/By too (CE 2026-07-07).
+    const expectedKW = interpPropPower(11) + settings.propAux + thrusters + settings.hotelLoad;
     expect(arr.powerKW).toBeCloseTo(expectedKW, 6);
     const s = computeStbyConsumption(expectedKW, settings.stby.engineCount, settings.stby.fuelType, settings.sfocDet);
     expect(arr.totalMT).toBeCloseTo(s.rate * 1, 10); // 1 h phase

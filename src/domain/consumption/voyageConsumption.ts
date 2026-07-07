@@ -8,8 +8,9 @@
 //                 loop) and MGO (close loop) with a 2 h changeover blend.
 //                 Plus the sailing boiler (MGO, 0.14 t/h) for every hour.
 //   St/By arr   — ETA → Arr. Power: per-leg MW override > speed-derived
-//                 (trial curve at the maneuvering speed + the thruster
-//                 profile + hotel) > the fallback default (stby.avgPowerMW).
+//                 (trial curve at the maneuvering speed + prop auxiliaries +
+//                 the thruster profile + hotel) > the fallback default
+//                 (stby.avgPowerMW).
 //                 Standby is modeled closed-loop; DGs needed beyond the
 //                 configured St/By count run on MGO (CE 2026-07-07).
 //   Port stay   — Arr → Dep. Hotel-load DGs + fixed MGO boiler (0.20 t/h).
@@ -87,10 +88,15 @@ function stbyPhase(
     powerKW = ovr * 1000;
     source = 'override';
   } else if (stbySpeed != null && stbySpeed > 0) {
-    // Speed-derived: trial-curve propulsion at the maneuvering speed, plus the
-    // thruster profile and hotel. No sea margin — that is an open-water
-    // weather allowance, not a harbour one.
-    powerKW = interpPropPower(stbySpeed) + thrusterAvgKW(hours, settings) + settings.hotelLoad;
+    // Speed-derived: trial-curve propulsion at the maneuvering speed, plus
+    // prop auxiliaries (steering etc. run while maneuvering too, CE
+    // 2026-07-07), the thruster profile and hotel. No sea margin — that is
+    // an open-water weather allowance, not a harbour one.
+    powerKW =
+      interpPropPower(stbySpeed) +
+      settings.propAux +
+      thrusterAvgKW(hours, settings) +
+      settings.hotelLoad;
     source = 'speed';
     speed = stbySpeed;
   } else {

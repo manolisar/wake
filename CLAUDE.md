@@ -170,8 +170,9 @@ The SL Class engine, ported verbatim from `~/Projects/voyage-planner` (4 × Wär
 - `voyageConsumption.ts` — `computeVoyageConsumption(voyage, settings)` maps `computeVoyage`'s leg
   views onto the engine. Per port call: **Sea passage** (passage hours × blended open/close rates at
   the solved or target speed, + the 0.14 t/h sailing boiler), **St/By arrival/departure** (power =
-  per-leg MW override, else speed-derived `interpPropPower(stbySpeed) + thrusterAvgKW(hours) +
-  hotelLoad` when a St/By distance exists, else the `stby.avgPowerMW` fallback), **Port stay**
+  per-leg MW override, else speed-derived `interpPropPower(stbySpeed) + propAux +
+  thrusterAvgKW(hours) + hotelLoad` when a St/By distance exists — prop auxiliaries run during
+  St/By too (CE) — else the `stby.avgPowerMW` fallback), **Port stay**
   (hotel DGs + boiler; **Tender legs** instead run the tender plant — a 2nd DG always online with
   a fixed total output, CE 2026-07-07: 11,000 kW on 2 DGs, `settings.tender`). Produces the
   `VoyageConsumption` snapshot: resolved settings, per-leg phases with DG breakdowns, totals by
