@@ -20,7 +20,7 @@ export function getEngineWithLimits(engines: EngineState[]): EngineWithLimits[] 
 export function selectEngines(
   allEngines: EngineWithLimits[],
   totalKW: number,
-  speed: number
+  minEngines: number
 ): { selected: EngineWithLimits[]; allAvailable: EngineWithLimits[]; insufficient: boolean } {
   const sorted = allEngines
     .filter((e) => e.available)
@@ -32,7 +32,6 @@ export function selectEngines(
 
   const selected: EngineWithLimits[] = [];
   let capacity = 0;
-  const minEngines = speed > 0 ? 2 : 1;
 
   for (const eng of sorted) {
     selected.push(eng);

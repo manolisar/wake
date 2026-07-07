@@ -70,7 +70,7 @@ export function computeConsumption(
   const { selected: runningEngines, allAvailable, insufficient } = selectEngines(
     allEngines,
     totalKW,
-    speed
+    speed > 0 ? 2 : 1
   );
   const numRunning = runningEngines.length;
   const runningIds = new Set(runningEngines.map((e) => e.id));
