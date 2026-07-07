@@ -104,7 +104,7 @@ describe('bundle v2 — consumption fields', () => {
     });
     // Simulate an older build's snapshot: strip `result` off a St/By phase.
     const legWithStby = snap.legs.find((l) => l.stbyArr || l.stbyDep)!;
-    const phase = (legWithStby.stbyArr ?? legWithStby.stbyDep)! as Record<string, unknown>;
+    const phase = (legWithStby.stbyArr ?? legWithStby.stbyDep)! as unknown as Record<string, unknown>;
     delete phase.result;
     voyages['586'].consumption = snap;
     const back = parseBundle(JSON.stringify(buildBundle(voyages, '586')));
