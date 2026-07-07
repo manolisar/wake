@@ -158,14 +158,19 @@ The SL Class engine, ported verbatim from `~/Projects/voyage-planner` (4 × Wär
 `NOMINAL_KW = 16800`; DG3 MGO-locked — no HFO bunker line; DG4 open-loop scrubber only):
 
 - `trialData.ts` — FAT curves (speed → prop kW, load fraction → SFOC g/kWh).
-- `interpolation.ts` / `loadSharing.ts` / `consumption.ts` — speed + engines + settings →
-  `CalculationResult` (per-fuel t/h, per-DG loads, overload flags); `computeStaticConsumption`
-  (fixed power), `computePortConsumption` (hotel DGs + fixed MGO boiler 0.20 t/h), and
-  `computeStbyConsumption` (closed-loop standby: configured DGs on the configured fuel, any extra
-  DG the load needs runs on MGO — "a 3rd engine runs MGO"); a sailing boiler
-  (`SEA_BOILER_RATE_MT_PER_HR` 0.14 t/h MGO) burns for every sea-passage hour;
-  `closeLoopEngines` forces DG4 HFO→MGO for close-loop waters. Load limits HFO/LSFO 0.8, MGO 0.7;
-  selection priority HFO → LSFO → MGO; min 2 DGs at speed.
+- `interpolation.ts` / `loadSharing.ts` / `consumption.ts` — the shared plant core
+  `computePlantConsumption(totalKW, engines, sfocDet, minEngines)` → `CalculationResult` (per-fuel
+  t/h, per-DG loads, overload flags): selects DGs from the real lineup (fuel-priority, availability)
+  and load-shares. Every phase is a thin wrapper = a power demand + a lineup **transform** + a
+  minimum-DG floor. `computeConsumption` (sea) wraps it with the speed-derived demand;
+  `computePortConsumption` (Port/Tender) wraps it with `harbourEngines` (forces every DG to the
+  configured `inPortFuel`, clamped to each DG's legal fuels) + the port boiler. `closeLoopEngines`
+  (forces DG4 HFO→MGO) is applied by every St/By phase and by the close portion of a sea leg. Load
+  limits HFO/LSFO 0.8, MGO 0.7; selection priority HFO → LSFO → MGO; min 2 DGs at speed (St/By floor
+  = `stby.engineCount`). Boiler rates (`portBoilerRate` 0.19, `seaBoilerRate` 0.14 t/h MGO) are
+  settings. The old abstract `computeStaticConsumption`/`computeStbyConsumption` (count + single fuel
+  + MGO-escalation loop) are gone — extra MGO DGs are now emergent from fuel-priority selection over
+  the closed-loop lineup.
 - `blend.ts` — a leg's `openLoop` hours split it into pure-open / 2 h changeover (50/50 blend) /
   pure-close portions (extracted from the SL planner's SeaLegPlanner).
 - `settings.ts` — `resolveSettings(defaults, overrides)`: **ship defaults live on the bundle file**
@@ -173,11 +178,13 @@ The SL Class engine, ported verbatim from `~/Projects/voyage-planner` (4 × Wär
   clamped to `SETTING_RANGES`, illegal fuels corrected. Tolerant normalizers for bundle parsing.
 - `voyageConsumption.ts` — `computeVoyageConsumption(voyage, settings)` maps `computeVoyage`'s leg
   views onto the engine. Per port call: **Sea passage** (passage hours × blended open/close rates at
-  the solved or target speed, + the 0.14 t/h sailing boiler), **St/By arrival/departure** (power =
+  the solved or target speed, + the sailing boiler), **St/By arrival/departure** (power =
   per-leg MW override, else speed-derived `interpPropPower(stbySpeed) + propAux +
   thrusterAvgKW(hours) + hotelLoad` when a St/By distance exists — prop auxiliaries run during
-  St/By too (CE) — else the `stby.avgPowerMW` fallback), **Port stay**
-  (hotel DGs + boiler; **Tender legs** instead run the tender plant — a 2nd DG always online with
+  St/By too (CE) — else the `stby.avgPowerMW` fallback; that power is met by the **closed-loop
+  lineup** `closeLoopEngines(settings.engines)` with a `stby.engineCount` floor, so the fuel mix and
+  availability come from the real DGs), **Port stay** (hotel DGs on the `inPortFuel` harbour lineup +
+  port boiler; **Tender legs** instead run the tender plant — a 2nd DG always online with
   a fixed total output, CE 2026-07-07: 11,000 kW on 2 DGs, `settings.tender`). Produces the
   `VoyageConsumption` snapshot: resolved settings, per-leg phases with DG breakdowns, totals by
   fuel, warnings, and an `inputSignature` used to flag the report **stale** when legs/parameters
@@ -188,11 +195,19 @@ the propeller, so St/By phases add a thruster **profile** instead of a flat allo
 `thrusterIdleKW` (default 1,080 = 3 × 360 kW) for the whole phase except the final 30 minutes,
 which run at `thrusterHighKW` (default 9,000 = 3 × 3,000 kW); `thrusterAvgKW` time-weights the two
 (a ≤ 30 min phase is all high output). Both are visible and editable in Fuel Setup. Standby is
-modeled **closed-loop at all times**; whenever the load needs more DGs than the configured St/By
-count, each extra engine is assumed to run on MGO (`computeStbyConsumption`). Boilers: **port
-0.20 t/h**, **sailing 0.14 t/h**, both MGO. These replaced the pre-2026-07-07 `maneuverAuxKW`
-(2,000 kW flat) and 0.18 t/h port-only boiler; old snapshots simply flag stale and recalculate,
-and old files carrying `maneuverAuxKW` drop it on read (tolerant normalizers).
+modeled **closed-loop at all times** and runs the **real DG lineup**: the St/By demand is fed to the
+shared core against `closeLoopEngines(settings.engines)` with a `stby.engineCount` floor, so the fuel
+split follows the lineup (DG1/DG2 stay HFO, DG3 MGO-locked, DG4→MGO) and honours DG availability —
+e.g. with one HFO-capable DG offline the plant runs 1×HFO + 2×MGO. Boilers: **port 0.19 t/h**,
+**sailing 0.14 t/h**, both MGO, now editable ship-default + per-voyage settings (`portBoilerRate` /
+`seaBoilerRate`). In-port fuel is a policy setting `inPortFuel` (default MGO) forced on every DG in
+port + tendering via `harbourEngines`. **Behaviour shift to note (pending CE sign-off):** St/By
+previously ran a fixed `stby.fuelType` (MGO) with an MGO-escalation loop; it now inherits the sea
+lineup's HFO on DG1/DG2, so an existing all-MGO-standby setup shifts to a mixed HFO/MGO split —
+voyage total tonnage barely moves (SFOC is fuel-independent) but the HFO/MGO attribution changes.
+These replaced the pre-2026-07-07 `maneuverAuxKW` (2,000 kW flat) and 0.18 t/h port-only boiler; old
+snapshots flag stale and recalculate, and old files carrying `maneuverAuxKW` (or a pre-core snapshot
+lacking the per-phase `result`) drop it on read (tolerant normalizers).
 
 UI: **Fuel Setup** (`ConsumptionSettingsModal`, ship-defaults + this-voyage tabs with override
 pills) and **Consumption** (runs the calc; in edit mode the snapshot + a version entry persist to
@@ -209,12 +224,18 @@ the one edit affordance. Fuel colors are stable: HFO orange, MGO green, LSFO ind
 
 **Bundle v2**: `parseBundle` accepts v1 (consumption fields absent) and v2; always writes v2. The
 snapshot's numbers are trusted on read, its envelope validated — garbage blobs drop, never crash.
+A snapshot from before the shared-plant-core rewrite (St/By/Port phases lacking the per-phase
+`result: CalculationResult` the report renders) is dropped whole on read, so the report falls back to
+its empty state and the user recalculates rather than crashing.
 
-The engine is golden-locked: `consumption.test.ts` pins rates captured from the reference engine in
-`~/Projects/voyage-planner` for identical inputs. If numbers must change, change them there first
-or document the divergence. **Documented divergences (CE assumptions, 2026-07-07):** port boiler
-0.20 t/h vs the reference's 0.18, the sailing boiler (reference has none), the thruster profile
-replacing the flat maneuvering aux, and the MGO St/By escalation (app-only). The DG SFOC/load
-math itself remains golden-locked.
+The engine is golden-locked via the **sea** cases: `consumption.test.ts` pins `computeConsumption`
+rates (speed 15/22/0) captured from the reference engine in `~/Projects/voyage-planner`, and these
+proved the shared-core extraction faithful. If numbers must change, change them there first or
+document the divergence. **Documented divergences (CE assumptions, 2026-07-07):** port boiler
+0.19 t/h vs the reference's 0.18, the sailing boiler (reference has none), the thruster profile
+replacing the flat maneuvering aux, and the lineup-driven St/By/Port model (real closed-loop /
+harbour lineup with availability, replacing the reference's abstract count+fuel and the app's earlier
+MGO-escalation loop). The DG SFOC/load-sharing math itself remains golden-locked. **Pending CE
+sign-off:** the St/By MGO→HFO fuel-split shift for existing all-MGO-standby setups.
 
 *Last updated: 2026-07-07.*
