@@ -70,6 +70,16 @@ describe('boiler-rate settings', () => {
   });
 });
 
+describe('inPortFuel policy', () => {
+  it('defaults to MGO', () => {
+    expect(normalizeSettings({}).inPortFuel).toBe('MGO');
+  });
+  it('accepts a valid fuel and rejects garbage', () => {
+    expect(normalizeSettings({ inPortFuel: 'LSFO' }).inPortFuel).toBe('LSFO');
+    expect(normalizeSettings({ inPortFuel: 'ZZZ' }).inPortFuel).toBe('MGO');
+  });
+});
+
 describe('normalizeOverrides', () => {
   it('drops garbage and empty blobs', () => {
     expect(normalizeOverrides(null)).toBeUndefined();

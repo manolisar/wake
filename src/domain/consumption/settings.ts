@@ -78,6 +78,7 @@ export function normalizeSettings(
     ),
     portBoilerRate: clamp(num(o.portBoilerRate, base.portBoilerRate), R.portBoilerRate.min, R.portBoilerRate.max),
     seaBoilerRate: clamp(num(o.seaBoilerRate, base.seaBoilerRate), R.seaBoilerRate.min, R.seaBoilerRate.max),
+    inPortFuel: fuel(o.inPortFuel, base.inPortFuel),
     engines: normalizeEngines(o.engines, base.engines),
     port: {
       engineCount: clamp(
@@ -134,6 +135,7 @@ export function resolveSettings(
     ...('thrusterHighKW' in overrides ? { thrusterHighKW: overrides.thrusterHighKW } : null),
     ...('portBoilerRate' in overrides ? { portBoilerRate: overrides.portBoilerRate } : null),
     ...('seaBoilerRate' in overrides ? { seaBoilerRate: overrides.seaBoilerRate } : null),
+    ...('inPortFuel' in overrides ? { inPortFuel: overrides.inPortFuel } : null),
     ...(overrides.engines ? { engines: overrides.engines } : null),
     port: { ...base.port, ...overrides.port },
     tender: { ...base.tender, ...overrides.tender },
@@ -159,6 +161,7 @@ export function normalizeOverrides(v: unknown): ConsumptionOverrides | undefined
   numIf('thrusterHighKW', R.thrusterHighKW);
   numIf('portBoilerRate', R.portBoilerRate);
   numIf('seaBoilerRate', R.seaBoilerRate);
+  if (FUELS.includes(o.inPortFuel as FuelType)) out.inPortFuel = o.inPortFuel as FuelType;
   if (Array.isArray(o.engines)) {
     out.engines = normalizeEngines(o.engines, DEFAULT_CONSUMPTION_SETTINGS.engines);
   }

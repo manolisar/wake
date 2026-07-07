@@ -101,6 +101,8 @@ export interface ConsumptionSettings extends VesselSettings {
   portBoilerRate: number;
   /** Sailing boiler burn (t/h MGO) per sea-passage hour. CE default 0.14. */
   seaBoilerRate: number;
+  /** Fuel forced on every DG in port + while tendering (harbour transform). CE default MGO. */
+  inPortFuel: FuelType;
 }
 
 /** Per-voyage overrides; anything unset falls through to the ship defaults. */
@@ -113,6 +115,7 @@ export interface ConsumptionOverrides {
   thrusterHighKW?: number;
   portBoilerRate?: number;
   seaBoilerRate?: number;
+  inPortFuel?: FuelType;
   engines?: EngineState[]; // whole-array override (all 4 DGs)
   port?: Partial<PortSetup>;
   tender?: Partial<TenderSetup>;

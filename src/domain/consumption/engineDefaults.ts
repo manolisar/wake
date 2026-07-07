@@ -42,6 +42,7 @@ export const DEFAULT_CONSUMPTION_SETTINGS: ConsumptionSettings = {
   thrusterHighKW: 9000, // 3 × 3,000 kW, final 30 min of St/By
   portBoilerRate: 0.19, // t/h MGO, CE-validated 2026-07-07 (was 0.20)
   seaBoilerRate: 0.14, // t/h MGO, CE-validated 2026-07-07
+  inPortFuel: 'MGO',
 };
 
 /** Clamp ranges for every numeric parameter (UI + normalizer share these). */
