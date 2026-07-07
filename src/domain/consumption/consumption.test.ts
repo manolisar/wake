@@ -4,16 +4,14 @@
 //
 // Documented divergences from the reference (CE-validated assumptions,
 // 2026-07-07): a port boiler (default 0.19 t/h; reference: 0.18), a sailing
-// boiler (default 0.14 t/h) the reference lacks, and St/By escalation onto
-// MGO (computeStbyConsumption — app-only, no reference counterpart). Boiler
-// rates are settings (ship default + per-voyage override) as of the boiler-
-// rate-settings task.
+// boiler (default 0.14 t/h) the reference lacks, and St/By running the real
+// closed-loop DG lineup (via computePlantConsumption — app-only, no reference
+// counterpart). Boiler rates are settings (ship default + per-voyage
+// override) as of the boiler-rate-settings task.
 import { describe, it, expect } from 'vitest';
 import {
   computeConsumption,
   computePlantConsumption,
-  computeStaticConsumption,
-  computeStbyConsumption,
   computePortConsumption,
   closeLoopEngines,
   harbourEngines,
@@ -102,31 +100,6 @@ describe('harbourEngines', () => {
   });
 });
 
-describe('computeStaticConsumption (golden cross-check)', () => {
-  it('10 MW / 2 DGs / MGO / det 2 → 2.0853236 t/h', () => {
-    const r = computeStaticConsumption(10000, 2, 'MGO', 2);
-    expect(r.rate).toBeCloseTo(2.085323619047619, 10);
-    expect(r.perFuel.mgo).toBeCloseTo(2.085323619047619, 10);
-    expect(r.availablePowerKW).toBeCloseTo(23520, 6);
-    expect(r.insufficient).toBe(false);
-  });
-
-  it('6.2 MW / 1 DG / MGO / det 2 → 1.2821197 t/h', () => {
-    const r = computeStaticConsumption(6200, 1, 'MGO', 2);
-    expect(r.rate).toBeCloseTo(1.2821197295238094, 10);
-  });
-
-  it('flags insufficiency when demand exceeds capped capacity', () => {
-    const r = computeStaticConsumption(30000, 2, 'MGO', 2);
-    expect(r.insufficient).toBe(true);
-  });
-
-  it('zero power or engines → zero burn', () => {
-    expect(computeStaticConsumption(0, 2, 'MGO', 2).rate).toBe(0);
-    expect(computeStaticConsumption(5000, 0, 'MGO', 2).rate).toBe(0);
-  });
-});
-
 describe('computePortConsumption (DG core + boiler)', () => {
   it('8 MW hotel / harbour MGO / floor 1 / det 2 / 10 h / boiler 0.19 → preserved DG golden', () => {
     const r = computePortConsumption(8000, settings.engines, 'MGO', { sfocDet: 2, minEngines: 1, boilerRate: 0.19, hours: 10 });
@@ -138,40 +111,24 @@ describe('computePortConsumption (DG core + boiler)', () => {
   });
 });
 
-describe('computeStbyConsumption (closed-loop standby, extra DGs on MGO)', () => {
-  it('within the configured capacity it equals computeStaticConsumption', () => {
-    const r = computeStbyConsumption(10000, 2, 'MGO', 2);
-    const s = computeStaticConsumption(10000, 2, 'MGO', 2);
-    expect(r.rate).toBeCloseTo(s.rate, 12);
-    expect(r.perFuel).toEqual(s.perFuel);
-    expect(r.extraMgoEngines).toBe(0);
+describe('closed-loop St/By plant (via computePlantConsumption)', () => {
+  const clEngines = () => closeLoopEngines(settings.engines); // DG1 HFO, DG2 HFO, DG3 MGO, DG4→MGO
+  it('full board, 3 DGs needed → 2×HFO + 1×MGO', () => {
+    // 30 MW: DG1+DG2 (HFO, cap 13.44 each = 26.88) can't carry it → +1 MGO.
+    const r = computePlantConsumption(30000, clEngines(), settings.sfocDet, 2);
+    const running = r.engineResults.filter((e) => e.status === 'RUNNING');
+    expect(running.filter((e) => e.fuel === 'HFO').length).toBe(2);
+    expect(running.filter((e) => e.fuel === 'MGO').length).toBe(1);
     expect(r.insufficient).toBe(false);
   });
-
-  it('brings a 3rd DG online on MGO when 2 configured DGs cannot carry the load', () => {
-    // 30 MW > 2 × 16800 × 0.7 = 23.52 MW → +1 MGO engine, 10 MW each.
-    const r = computeStbyConsumption(30000, 2, 'MGO', 2);
-    expect(r.extraMgoEngines).toBe(1);
+  it('DG1 unavailable, 3 DGs needed → 1×HFO + 2×MGO', () => {
+    const lineup = closeLoopEngines(
+      settings.engines.map((e) => (e.id === 1 ? { ...e, available: false } : e))
+    );
+    const r = computePlantConsumption(30000, lineup, settings.sfocDet, 2);
+    const running = r.engineResults.filter((e) => e.status === 'RUNNING');
+    expect(running.filter((e) => e.fuel === 'HFO').length).toBe(1); // only DG2 left on HFO
+    expect(running.filter((e) => e.fuel === 'MGO').length).toBe(2); // DG3 + DG4
     expect(r.insufficient).toBe(false);
-    // Equal share across 3 identical-fuel engines ≡ static with 3 DGs.
-    const s = computeStaticConsumption(30000, 3, 'MGO', 2);
-    expect(r.rate).toBeCloseTo(s.rate, 10);
-  });
-
-  it('splits fuels when the base DGs burn HFO and the extra one MGO', () => {
-    // 30 MW > 2 × 16800 × 0.8 = 26.88 MW → +1 MGO. 10 MW per engine, same
-    // SFOC per kW regardless of fuel → HFO share is exactly 2× the MGO share.
-    const r = computeStbyConsumption(30000, 2, 'HFO', 2);
-    expect(r.extraMgoEngines).toBe(1);
-    expect(r.perFuel.hfo).toBeCloseTo(2 * r.perFuel.mgo, 10);
-    expect(r.perFuel.lsfo).toBe(0);
-    expect(r.insufficient).toBe(false);
-  });
-
-  it('stops at the 4 installed DGs and flags insufficiency beyond them', () => {
-    // 60 MW > 4 × 16800 × 0.7 = 47.04 MW even with both extra MGO engines.
-    const r = computeStbyConsumption(60000, 2, 'MGO', 2);
-    expect(r.extraMgoEngines).toBe(2);
-    expect(r.insufficient).toBe(true);
   });
 });

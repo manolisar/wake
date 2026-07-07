@@ -12,8 +12,10 @@
 //                 (trial curve at the maneuvering speed + prop auxiliaries +
 //                 the thruster profile + hotel) > the fallback default
 //                 (stby.avgPowerMW).
-//                 Standby is modeled closed-loop; DGs needed beyond the
-//                 configured St/By count run on MGO (CE 2026-07-07).
+//                 Standby runs the real closed-loop DG lineup (settings.engines
+//                 with DG4 forced HFO→MGO) via the shared plant core, with
+//                 settings.stby.engineCount as the minimum-DG floor — the load
+//                 pulls in more DGs by fuel priority as needed (CE 2026-07-07).
 //   Port stay   — Arr → Dep. Hotel-load DGs + MGO boiler (settings.portBoilerRate,
 //                 default 0.19 t/h).
 //                 Tender legs instead run the tender plant assumption: a
@@ -26,8 +28,8 @@ import { computeVoyage } from '../calculations';
 import { hhmmToMin } from '../time';
 import {
   computeConsumption,
+  computePlantConsumption,
   computePortConsumption,
-  computeStbyConsumption,
   closeLoopEngines,
 } from './consumption';
 import { interpPropPower } from './interpolation';
@@ -105,27 +107,26 @@ function stbyPhase(
     source = 'default';
   }
 
-  const r = computeStbyConsumption(powerKW, settings.stby.engineCount, settings.stby.fuelType, settings.sfocDet);
+  const r = computePlantConsumption(
+    powerKW,
+    closeLoopEngines(settings.engines),
+    settings.sfocDet,
+    settings.stby.engineCount
+  );
   if (r.insufficient) {
-    warnings.push(
-      `${label}: demand ${(powerKW / 1000).toFixed(1)} MW exceeds ` +
-        `${settings.stby.engineCount + r.extraMgoEngines} DG capacity` +
-        (r.extraMgoEngines > 0 ? ` (incl. ${r.extraMgoEngines} extra on MGO)` : ` at ${settings.stby.fuelType} limits`)
-    );
+    warnings.push(`${label}: demand ${(powerKW / 1000).toFixed(1)} MW exceeds available DG capacity`);
   }
   return {
     hours,
-    hfoMT: r.perFuel.hfo * hours,
-    mgoMT: r.perFuel.mgo * hours,
-    lsfoMT: r.perFuel.lsfo * hours,
-    totalMT: r.rate * hours,
+    hfoMT: r.hfoRate * hours,
+    mgoMT: r.mgoRate * hours,
+    lsfoMT: r.lsfoRate * hours,
+    totalMT: r.totalRate * hours,
     insufficient: r.insufficient,
     source,
     speed,
     powerKW,
-    engineCount: settings.stby.engineCount,
-    fuelType: settings.stby.fuelType,
-    extraMgoEngines: r.extraMgoEngines,
+    result: r,
   };
 }
 

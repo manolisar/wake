@@ -37,7 +37,7 @@ export const DEFAULT_CONSUMPTION_SETTINGS: ConsumptionSettings = {
   ],
   port: { engineCount: 1 },
   tender: { totalPowerKW: 11000, engineCount: 2 }, // CE 2026-07-07
-  stby: { avgPowerMW: 10, engineCount: 2, fuelType: 'MGO' },
+  stby: { avgPowerMW: 10, engineCount: 2 },
   thrusterIdleKW: 1080, // 3 × 360 kW, CE-validated 2026-07-07
   thrusterHighKW: 9000, // 3 × 3,000 kW, final 30 min of St/By
   portBoilerRate: 0.19, // t/h MGO, CE-validated 2026-07-07 (was 0.20)

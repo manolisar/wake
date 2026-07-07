@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { computeVoyageConsumption, consumptionSignature, thrusterAvgKW } from './voyageConsumption';
 import {
   computeConsumption,
-  computeStbyConsumption,
+  computePlantConsumption,
   computePortConsumption,
   closeLoopEngines,
 } from './consumption';
@@ -59,9 +59,9 @@ describe('computeVoyageConsumption — voyage 586 fixture', () => {
     // Prop auxiliaries run during St/By too (CE 2026-07-07).
     const expectedKW = interpPropPower(11) + settings.propAux + thrusters + settings.hotelLoad;
     expect(arr.powerKW).toBeCloseTo(expectedKW, 6);
-    const s = computeStbyConsumption(expectedKW, settings.stby.engineCount, settings.stby.fuelType, settings.sfocDet);
-    expect(arr.totalMT).toBeCloseTo(s.rate * 1, 10); // 1 h phase
-    expect(arr.extraMgoEngines).toBe(s.extraMgoEngines);
+    const s = computePlantConsumption(expectedKW, closeLoopEngines(settings.engines), settings.sfocDet, settings.stby.engineCount);
+    expect(arr.totalMT).toBeCloseTo(s.totalRate * 1, 10); // 1 h phase
+    expect(arr.result.numRunning).toBe(s.numRunning);
   });
 
   it('st/by without distance data falls back to the default power', () => {

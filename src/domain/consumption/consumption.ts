@@ -2,11 +2,11 @@
 // ~/Projects/voyage-planner/src/engine/consumption.ts.
 //
 // speed + engines + settings → CalculationResult (per-fuel t/h rates, per-DG
-// loads, overload flags). Plus static (port/standby) burns and the DG4
-// close-loop transform.
+// loads, overload flags). Plus port/standby burns via the shared plant core
+// and the DG4 close-loop / harbour-fuel transforms.
 
 import { NOMINAL_KW } from './trialData';
-import { LOAD_LIMITS, engineConfigs } from './engineDefaults';
+import { engineConfigs } from './engineDefaults';
 import { interpPropPower, interpSFOC } from './interpolation';
 import { getEngineWithLimits, selectEngines, distributeLoad } from './loadSharing';
 import type { EngineState, EngineResult, CalculationResult, FuelType, VesselSettings } from './types';
@@ -38,13 +38,6 @@ export function harbourEngines(engines: EngineState[], inPortFuel: FuelType): En
     const fuel = cfg && cfg.allowedFuels.includes(inPortFuel) ? inPortFuel : cfg?.allowedFuels[0] ?? e.fuel;
     return { ...e, fuel };
   });
-}
-
-export interface StaticConsumptionResult {
-  rate: number;
-  perFuel: { hfo: number; mgo: number; lsfo: number };
-  availablePowerKW: number;
-  insufficient: boolean;
 }
 
 export interface PortConsumption {
@@ -147,105 +140,6 @@ export function computeConsumption(
   const totalKW = propWithMargin + propAux + settings.hotelLoad;
   const r = computePlantConsumption(totalKW, engines, settings.sfocDet, speed > 0 ? 2 : 1);
   return { ...r, propPowerKW: propWithMargin + propAux };
-}
-
-/** Compute fuel consumption for port/standby (no speed, custom power) */
-export function computeStaticConsumption(
-  totalPowerKW: number,
-  engineCount: number,
-  fuelType: FuelType,
-  sfocDet: number
-): StaticConsumptionResult {
-  if (engineCount <= 0 || totalPowerKW <= 0) {
-    return {
-      rate: 0,
-      perFuel: { hfo: 0, mgo: 0, lsfo: 0 },
-      availablePowerKW: 0,
-      insufficient: false,
-    };
-  }
-
-  const loadLimit = LOAD_LIMITS[fuelType];
-  const maxKW = NOMINAL_KW * loadLimit;
-  const availablePowerKW = maxKW * engineCount;
-  const perEngineKW = Math.min(totalPowerKW / engineCount, maxKW);
-  const lf = perEngineKW / NOMINAL_KW;
-  const baseSFOC = interpSFOC(lf);
-  const sfoc = baseSFOC * (1 + sfocDet / 100);
-  const perEngineCons = (sfoc * perEngineKW) / 1e6;
-  const totalRate = perEngineCons * engineCount;
-
-  const perFuel = { hfo: 0, mgo: 0, lsfo: 0 };
-  if (fuelType === 'HFO') perFuel.hfo = totalRate;
-  else if (fuelType === 'MGO') perFuel.mgo = totalRate;
-  else perFuel.lsfo = totalRate;
-
-  return {
-    rate: totalRate,
-    perFuel,
-    availablePowerKW,
-    insufficient: totalPowerKW > availablePowerKW,
-  };
-}
-
-/**
- * St/By plant burn with the closed-loop standby assumptions (CE 2026-07-07):
- * standby runs closed-loop at all times, the configured St/By DGs burn the
- * configured fuel, and whenever the load needs more DGs than configured each
- * extra engine runs on MGO (up to the 4 installed). Within the configured
- * capacity this is identical to computeStaticConsumption.
- */
-export interface StbyConsumptionResult extends StaticConsumptionResult {
-  /** DGs brought online on MGO beyond the configured count. */
-  extraMgoEngines: number;
-}
-
-export function computeStbyConsumption(
-  totalPowerKW: number,
-  engineCount: number,
-  fuelType: FuelType,
-  sfocDet: number
-): StbyConsumptionResult {
-  const base = computeStaticConsumption(totalPowerKW, engineCount, fuelType, sfocDet);
-  if (!base.insufficient || engineCount <= 0) return { ...base, extraMgoEngines: 0 };
-
-  const baseMaxKW = NOMINAL_KW * LOAD_LIMITS[fuelType];
-  const mgoMaxKW = NOMINAL_KW * LOAD_LIMITS.MGO;
-  let extraMgoEngines = 0;
-  let capacity = engineCount * baseMaxKW;
-  while (engineCount + extraMgoEngines < 4 && capacity < totalPowerKW) {
-    extraMgoEngines++;
-    capacity += mgoMaxKW;
-  }
-  if (extraMgoEngines === 0) return { ...base, extraMgoEngines: 0 };
-
-  // Equal-share the load across the mixed set (same waterfall as at sea).
-  const units = [
-    ...Array.from({ length: engineCount }, (_, i) => ({
-      id: i + 1, available: true, fuel: fuelType, loadLimit: LOAD_LIMITS[fuelType], maxKW: baseMaxKW,
-    })),
-    ...Array.from({ length: extraMgoEngines }, (_, i) => ({
-      id: engineCount + i + 1, available: true, fuel: 'MGO' as FuelType, loadLimit: LOAD_LIMITS.MGO, maxKW: mgoMaxKW,
-    })),
-  ];
-  const loads = distributeLoad(units, Math.min(totalPowerKW, capacity));
-  const perFuel = { hfo: 0, mgo: 0, lsfo: 0 };
-  units.forEach((u) => {
-    const kw = loads.get(u.id) || 0;
-    if (kw <= 0) return;
-    const sfoc = interpSFOC(kw / NOMINAL_KW) * (1 + sfocDet / 100);
-    const cons = (sfoc * kw) / 1e6;
-    if (u.fuel === 'HFO') perFuel.hfo += cons;
-    else if (u.fuel === 'LSFO') perFuel.lsfo += cons;
-    else perFuel.mgo += cons;
-  });
-  return {
-    rate: perFuel.hfo + perFuel.mgo + perFuel.lsfo,
-    perFuel,
-    availablePowerKW: capacity,
-    insufficient: totalPowerKW > capacity,
-    extraMgoEngines,
-  };
 }
 
 /**

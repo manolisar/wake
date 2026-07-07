@@ -36,6 +36,14 @@ const hrs = (n: number) => {
   return `${h}:${String(m).padStart(2, '0')}`;
 };
 
+const fuelMix = (r: CalculationResult) => {
+  const running = r.engineResults.filter((e) => e.status === 'RUNNING');
+  const by: Record<string, number> = {};
+  running.forEach((e) => { by[e.fuel] = (by[e.fuel] ?? 0) + 1; });
+  const parts = (['HFO', 'MGO', 'LSFO'] as FuelType[]).filter((f) => by[f]).map((f) => `${by[f]}×${f}`);
+  return `${running.length} DG · ${parts.join(' ')}`;
+};
+
 function FuelCells({ p }: { p: { hfoMT: number; mgoMT: number; lsfoMT: number; totalMT: number } }) {
   return (
     <>
@@ -146,8 +154,8 @@ function StbyRow({
           </span>
         )}
         <span className="ml-2 font-mono text-[0.58rem] text-faint">
-          {phase.engineCount} DG · {phase.fuelType}
-          {(phase.extraMgoEngines ?? 0) > 0 && ` +${phase.extraMgoEngines} MGO`}
+          {fuelMix(phase.result)}
+          {phase.result.insufficient && <span className="ml-1 text-amber">⚠ capacity</span>}
         </span>
       </td>
       <FuelCells p={phase} />

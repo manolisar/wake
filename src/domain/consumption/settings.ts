@@ -106,7 +106,6 @@ export function normalizeSettings(
         R.engineCount.min,
         R.engineCount.max
       ),
-      fuelType: fuel(stby.fuelType, base.stby.fuelType),
     },
   };
 }
@@ -186,7 +185,6 @@ export function normalizeOverrides(v: unknown): ConsumptionOverrides | undefined
       stby.avgPowerMW = clamp(Number(s.avgPowerMW), R.avgPowerMW.min, R.avgPowerMW.max);
     if (s.engineCount != null && Number.isFinite(Number(s.engineCount)))
       stby.engineCount = clamp(Math.round(Number(s.engineCount)), R.engineCount.min, R.engineCount.max);
-    if (FUELS.includes(s.fuelType as FuelType)) stby.fuelType = s.fuelType as FuelType;
     if (Object.keys(stby).length) out.stby = stby;
   }
   return Object.keys(out).length ? out : undefined;

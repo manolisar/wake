@@ -40,8 +40,6 @@ const SCALARS: { key: ScalarKey; label: string; unit: string; step: number; hint
   { key: 'thrusterHighKW', label: 'Thrusters high', unit: 'kW', step: 500, hint: 'Final 30 min of St/By (3×3,000 kW)' },
 ];
 
-const FUELS: FuelType[] = ['HFO', 'MGO', 'LSFO'];
-
 function OverriddenPill({ onReset, disabled }: { onReset: () => void; disabled: boolean }) {
   return (
     <button
@@ -374,7 +372,7 @@ export function ConsumptionSettingsModal({
                   <OverriddenPill onReset={() => resetGroup('stby')} disabled={!canEditTab} />
                 )}
               </div>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label htmlFor="fuel-stby-mw" className={label}>
                     Power · MW
@@ -406,27 +404,11 @@ export function ConsumptionSettingsModal({
                     onChange={(e) => setGroup('stby', { engineCount: Number(e.target.value) })}
                   />
                 </div>
-                <div>
-                  <label htmlFor="fuel-stby-fuel" className={label}>
-                    Fuel
-                  </label>
-                  <select
-                    id="fuel-stby-fuel"
-                    className={input}
-                    value={view.stby.fuelType}
-                    disabled={!canEditTab}
-                    onChange={(e) => setGroup('stby', { fuelType: e.target.value as FuelType })}
-                  >
-                    {FUELS.map((f) => (
-                      <option key={f}>{f}</option>
-                    ))}
-                  </select>
-                </div>
               </div>
               <div className="mt-1.5 text-[0.58rem] text-faint">
-                Used when a St/By phase has no distance and no per-leg MW override. The St/By DG
-                count &amp; fuel also apply to speed-derived phases; any extra DG the load needs
-                runs on MGO (closed-loop standby).
+                Used when a St/By phase has no distance and no per-leg MW override. Standby always
+                runs the real closed-loop DG lineup (from the DG cards above) — this DG count is
+                the minimum floor; the load pulls in more DGs as needed.
               </div>
             </div>
           </div>

@@ -74,7 +74,6 @@ export interface StbySetup {
   /** Fallback TOTAL plant power when a St/By phase has no distance data. */
   avgPowerMW: number;
   engineCount: number;
-  fuelType: FuelType;
 }
 
 /** The full parameter set the calculation runs with (a resolved snapshot). */
@@ -152,12 +151,8 @@ export interface StbyPhase extends PhaseConsumption {
   /** Maneuvering speed (kn) when source === 'speed'. */
   speed?: number;
   powerKW: number;
-  engineCount: number;
-  fuelType: FuelType;
-  /** DGs brought online on MGO beyond the configured St/By count because the
-   *  load needed them (CE assumption: a 3rd engine runs MGO). Absent in
-   *  snapshots persisted before 2026-07-07. */
-  extraMgoEngines?: number;
+  /** DG breakdown from the shared plant core (closed-loop lineup). */
+  result: CalculationResult;
 }
 
 export interface PortPhase extends PhaseConsumption {
