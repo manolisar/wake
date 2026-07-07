@@ -47,14 +47,6 @@ export interface StaticConsumptionResult {
   insufficient: boolean;
 }
 
-/** Port boiler burns MGO at a fixed rate for every hour the vessel is in port.
- *  CE-validated 2026-07-07 (diverges from the reference planner's 0.18). */
-export const PORT_BOILER_RATE_MT_PER_HR = 0.2;
-
-/** Sailing boiler burns MGO at a fixed rate for every sea-passage hour.
- *  CE-validated 2026-07-07 (the reference planner has no sailing boiler). */
-export const SEA_BOILER_RATE_MT_PER_HR = 0.14;
-
 export interface PortConsumption {
   /** DG (hotel load) rate, t/hr — boiler excluded */
   dgRate: number;
@@ -256,19 +248,20 @@ export function computeStbyConsumption(
 }
 
 /**
- * Port consumption = DG hotel-load burn + a fixed MGO boiler burn (0.20 t/hr),
- * both applied for the same `hours`. Single source of truth so the port box,
- * the voyage summary, and the export all roll up boiler identically.
+ * Port consumption = DG hotel-load burn + an MGO boiler burn at the given
+ * rate, both applied for the same `hours`. Single source of truth so the
+ * port box, the voyage summary, and the export all roll up boiler identically.
  */
 export function computePortConsumption(
-  hotelLoadKW: number,
+  demandKW: number,
   engineCount: number,
   fuelType: FuelType,
   sfocDet: number,
+  boilerRate: number,
   hours: number
 ): PortConsumption {
-  const dg = computeStaticConsumption(hotelLoadKW, engineCount, fuelType, sfocDet);
-  const boilerMT = PORT_BOILER_RATE_MT_PER_HR * hours;
+  const dg = computeStaticConsumption(demandKW, engineCount, fuelType, sfocDet);
+  const boilerMT = boilerRate * hours;
   const perFuelMT = {
     hfo: dg.perFuel.hfo * hours,
     mgo: dg.perFuel.mgo * hours + boilerMT,
@@ -276,7 +269,7 @@ export function computePortConsumption(
   };
   return {
     dgRate: dg.rate,
-    boilerRate: PORT_BOILER_RATE_MT_PER_HR,
+    boilerRate,
     boilerMT,
     perFuelMT,
     totalMT: perFuelMT.hfo + perFuelMT.mgo + perFuelMT.lsfo,

@@ -5,7 +5,6 @@ import {
   computeStbyConsumption,
   computePortConsumption,
   closeLoopEngines,
-  SEA_BOILER_RATE_MT_PER_HR,
 } from './consumption';
 import { blendLegFuel } from './blend';
 import { interpPropPower } from './interpolation';
@@ -42,7 +41,7 @@ describe('computeVoyageConsumption — voyage 586 fixture', () => {
     const open = computeConsumption(sea.speed, settings.engines, settings);
     const close = computeConsumption(sea.speed, closeLoopEngines(settings.engines), settings);
     const expected = blendLegFuel(open, close, 62, 58);
-    const boiler = SEA_BOILER_RATE_MT_PER_HR * 62; // sailing boiler, MGO
+    const boiler = settings.seaBoilerRate * 62; // sailing boiler, MGO
     expect(sea.boilerMT).toBeCloseTo(boiler, 10);
     expect(sea.hfoMT).toBeCloseTo(expected.hfoMT, 10);
     expect(sea.mgoMT).toBeCloseTo(expected.mgoMT + boiler, 10);
@@ -76,10 +75,10 @@ describe('computeVoyageConsumption — voyage 586 fixture', () => {
     const port = basseterre.portStay!;
     expect(port.hours).toBeCloseTo(9, 5);
     const expected = computePortConsumption(
-      settings.hotelLoad, settings.port.engineCount, settings.port.fuelType, settings.sfocDet, 9
+      settings.hotelLoad, settings.port.engineCount, settings.port.fuelType, settings.sfocDet, settings.portBoilerRate, 9
     );
     expect(port.totalMT).toBeCloseTo(expected.totalMT, 10);
-    expect(port.boilerMT).toBeCloseTo(0.2 * 9, 10);
+    expect(port.boilerMT).toBeCloseTo(0.19 * 9, 10);
   });
 
   it('totals.boilerMT rolls up port and sailing boilers together', () => {
@@ -124,13 +123,13 @@ describe('tender stays (Type: Tender)', () => {
     expect(stay.tender).toBe(true);
     expect(stay.hours).toBeCloseTo(9, 5);
     const expected = computePortConsumption(
-      settings.tender.totalPowerKW, settings.tender.engineCount, settings.tender.fuelType, settings.sfocDet, 9
+      settings.tender.totalPowerKW, settings.tender.engineCount, settings.tender.fuelType, settings.sfocDet, settings.portBoilerRate, 9
     );
     expect(settings.tender.totalPowerKW).toBe(11000); // CE 2026-07-07
     expect(settings.tender.engineCount).toBe(2);
     expect(stay.totalMT).toBeCloseTo(expected.totalMT, 10);
     expect(stay.dgRate).toBeCloseTo(expected.dgRate, 10);
-    expect(stay.boilerMT).toBeCloseTo(0.2 * 9, 10); // port boiler still applies
+    expect(stay.boilerMT).toBeCloseTo(0.19 * 9, 10); // port boiler still applies
   });
 
   it('a normal port leg is unaffected by the tender assumptions', () => {
@@ -138,7 +137,7 @@ describe('tender stays (Type: Tender)', () => {
     const stay = r.legs.find((l) => l.port.startsWith('Basseterre'))!.portStay!;
     expect(stay.tender).toBeUndefined();
     const expected = computePortConsumption(
-      settings.hotelLoad, settings.port.engineCount, settings.port.fuelType, settings.sfocDet, 9
+      settings.hotelLoad, settings.port.engineCount, settings.port.fuelType, settings.sfocDet, settings.portBoilerRate, 9
     );
     expect(stay.totalMT).toBeCloseTo(expected.totalMT, 10);
   });

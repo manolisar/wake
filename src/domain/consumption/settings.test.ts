@@ -58,6 +58,18 @@ describe('resolveSettings', () => {
   });
 });
 
+describe('boiler-rate settings', () => {
+  it('defaults port boiler to 0.19 and sea boiler to 0.14', () => {
+    const s = normalizeSettings({});
+    expect(s.portBoilerRate).toBeCloseTo(0.19, 10);
+    expect(s.seaBoilerRate).toBeCloseTo(0.14, 10);
+  });
+  it('clamps boiler rates into [0, 1] and coerces per-voyage overrides', () => {
+    expect(normalizeSettings({ portBoilerRate: 9 }).portBoilerRate).toBe(1);
+    expect(normalizeOverrides({ portBoilerRate: 0.25 })!.portBoilerRate).toBeCloseTo(0.25, 10);
+  });
+});
+
 describe('normalizeOverrides', () => {
   it('drops garbage and empty blobs', () => {
     expect(normalizeOverrides(null)).toBeUndefined();

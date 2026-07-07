@@ -6,14 +6,16 @@
 //   Sea passage — prev port's FAW → this ETA, at the solved passage speed.
 //                 openLoop (HH:MM on the leg) splits DG4 between HFO (open
 //                 loop) and MGO (close loop) with a 2 h changeover blend.
-//                 Plus the sailing boiler (MGO, 0.14 t/h) for every hour.
+//                 Plus the sailing boiler (MGO, settings.seaBoilerRate,
+//                 default 0.14 t/h) for every hour.
 //   St/By arr   — ETA → Arr. Power: per-leg MW override > speed-derived
 //                 (trial curve at the maneuvering speed + prop auxiliaries +
 //                 the thruster profile + hotel) > the fallback default
 //                 (stby.avgPowerMW).
 //                 Standby is modeled closed-loop; DGs needed beyond the
 //                 configured St/By count run on MGO (CE 2026-07-07).
-//   Port stay   — Arr → Dep. Hotel-load DGs + fixed MGO boiler (0.20 t/h).
+//   Port stay   — Arr → Dep. Hotel-load DGs + MGO boiler (settings.portBoilerRate,
+//                 default 0.19 t/h).
 //                 Tender legs instead run the tender plant assumption: a
 //                 fixed total output on the tender DG count (CE 2026-07-07:
 //                 11,000 kW on 2 DGs), + the same port boiler.
@@ -27,7 +29,6 @@ import {
   computePortConsumption,
   computeStbyConsumption,
   closeLoopEngines,
-  SEA_BOILER_RATE_MT_PER_HR,
 } from './consumption';
 import { interpPropPower } from './interpolation';
 import { blendLegFuel, splitLegHours } from './blend';
@@ -164,7 +165,7 @@ export function computeVoyageConsumption(
         warnings.push(`${label}: sea passage demand exceeds available DG capacity`);
       }
       // Sailing boiler: fixed MGO burn for every passage hour (CE 2026-07-07).
-      const seaBoilerMT = SEA_BOILER_RATE_MT_PER_HR * hours;
+      const seaBoilerMT = settings.seaBoilerRate * hours;
       lc.sea = {
         hours,
         speed,
@@ -216,10 +217,10 @@ export function computeVoyageConsumption(
       const isTender = leg.type === 'Tender';
       const p = isTender
         ? computePortConsumption(
-            settings.tender.totalPowerKW, settings.tender.engineCount, settings.tender.fuelType, settings.sfocDet, hours
+            settings.tender.totalPowerKW, settings.tender.engineCount, settings.tender.fuelType, settings.sfocDet, settings.portBoilerRate, hours
           )
         : computePortConsumption(
-            settings.hotelLoad, settings.port.engineCount, settings.port.fuelType, settings.sfocDet, hours
+            settings.hotelLoad, settings.port.engineCount, settings.port.fuelType, settings.sfocDet, settings.portBoilerRate, hours
           );
       if (p.insufficient) {
         warnings.push(

@@ -76,6 +76,8 @@ export function normalizeSettings(
       R.thrusterHighKW.min,
       R.thrusterHighKW.max
     ),
+    portBoilerRate: clamp(num(o.portBoilerRate, base.portBoilerRate), R.portBoilerRate.min, R.portBoilerRate.max),
+    seaBoilerRate: clamp(num(o.seaBoilerRate, base.seaBoilerRate), R.seaBoilerRate.min, R.seaBoilerRate.max),
     engines: normalizeEngines(o.engines, base.engines),
     port: {
       engineCount: clamp(
@@ -130,6 +132,8 @@ export function resolveSettings(
     ...('propAux' in overrides ? { propAux: overrides.propAux } : null),
     ...('thrusterIdleKW' in overrides ? { thrusterIdleKW: overrides.thrusterIdleKW } : null),
     ...('thrusterHighKW' in overrides ? { thrusterHighKW: overrides.thrusterHighKW } : null),
+    ...('portBoilerRate' in overrides ? { portBoilerRate: overrides.portBoilerRate } : null),
+    ...('seaBoilerRate' in overrides ? { seaBoilerRate: overrides.seaBoilerRate } : null),
     ...(overrides.engines ? { engines: overrides.engines } : null),
     port: { ...base.port, ...overrides.port },
     tender: { ...base.tender, ...overrides.tender },
@@ -144,7 +148,7 @@ export function normalizeOverrides(v: unknown): ConsumptionOverrides | undefined
   const o = v as Record<string, unknown>;
   const out: ConsumptionOverrides = {};
   const R = SETTING_RANGES;
-  const numIf = (key: 'hotelLoad' | 'seaMargin' | 'sfocDet' | 'propAux' | 'thrusterIdleKW' | 'thrusterHighKW', r: { min: number; max: number }) => {
+  const numIf = (key: 'hotelLoad' | 'seaMargin' | 'sfocDet' | 'propAux' | 'thrusterIdleKW' | 'thrusterHighKW' | 'portBoilerRate' | 'seaBoilerRate', r: { min: number; max: number }) => {
     if (o[key] != null && Number.isFinite(Number(o[key]))) out[key] = clamp(Number(o[key]), r.min, r.max);
   };
   numIf('hotelLoad', R.hotelLoad);
@@ -153,6 +157,8 @@ export function normalizeOverrides(v: unknown): ConsumptionOverrides | undefined
   numIf('propAux', R.propAux);
   numIf('thrusterIdleKW', R.thrusterIdleKW);
   numIf('thrusterHighKW', R.thrusterHighKW);
+  numIf('portBoilerRate', R.portBoilerRate);
+  numIf('seaBoilerRate', R.seaBoilerRate);
   if (Array.isArray(o.engines)) {
     out.engines = normalizeEngines(o.engines, DEFAULT_CONSUMPTION_SETTINGS.engines);
   }

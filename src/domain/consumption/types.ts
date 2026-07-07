@@ -97,6 +97,10 @@ export interface ConsumptionSettings extends VesselSettings {
    * (docking/undocking). CE-validated 2026-07-07: 3 × 3,000 kW.
    */
   thrusterHighKW: number;
+  /** Port boiler burn (t/h MGO) while alongside. CE default 0.19 (2026-07-07). */
+  portBoilerRate: number;
+  /** Sailing boiler burn (t/h MGO) per sea-passage hour. CE default 0.14. */
+  seaBoilerRate: number;
 }
 
 /** Per-voyage overrides; anything unset falls through to the ship defaults. */
@@ -107,6 +111,8 @@ export interface ConsumptionOverrides {
   propAux?: number;
   thrusterIdleKW?: number;
   thrusterHighKW?: number;
+  portBoilerRate?: number;
+  seaBoilerRate?: number;
   engines?: EngineState[]; // whole-array override (all 4 DGs)
   port?: Partial<PortSetup>;
   tender?: Partial<TenderSetup>;

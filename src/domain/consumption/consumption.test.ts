@@ -3,9 +3,11 @@
 // ported engine must reproduce them exactly.
 //
 // Documented divergences from the reference (CE-validated assumptions,
-// 2026-07-07): port boiler 0.20 t/h (reference: 0.18), a sailing boiler
-// 0.14 t/h the reference lacks, and St/By escalation onto MGO
-// (computeStbyConsumption — app-only, no reference counterpart).
+// 2026-07-07): a port boiler (default 0.19 t/h; reference: 0.18), a sailing
+// boiler (default 0.14 t/h) the reference lacks, and St/By escalation onto
+// MGO (computeStbyConsumption — app-only, no reference counterpart). Boiler
+// rates are settings (ship default + per-voyage override) as of the boiler-
+// rate-settings task.
 import { describe, it, expect } from 'vitest';
 import {
   computeConsumption,
@@ -15,7 +17,6 @@ import {
   computePortConsumption,
   closeLoopEngines,
   harbourEngines,
-  PORT_BOILER_RATE_MT_PER_HR,
 } from './consumption';
 import { DEFAULT_CONSUMPTION_SETTINGS } from './engineDefaults';
 import type { EngineState } from './types';
@@ -126,13 +127,12 @@ describe('computeStaticConsumption (golden cross-check)', () => {
   });
 });
 
-describe('computePortConsumption (DG golden cross-check, boiler 0.20 per CE)', () => {
-  it('8 MW hotel / 1 DG / MGO / det 2 / 10 h → 18.4726 MT incl. 2.0 MT boiler', () => {
-    const r = computePortConsumption(8000, 1, 'MGO', 2, 10);
-    expect(r.dgRate).toBeCloseTo(1.6472630857142858, 10); // golden (reference engine)
-    expect(r.boilerMT).toBeCloseTo(PORT_BOILER_RATE_MT_PER_HR * 10, 10);
-    expect(r.boilerMT).toBeCloseTo(2.0, 10);
-    const expectedMT = 1.6472630857142858 * 10 + 2.0; // golden DG burn + boiler
+describe('computePortConsumption (DG + boiler)', () => {
+  it('8 MW hotel / 1 DG / MGO / det 2 / 10 h / boiler 0.19 → 18.2726 MT', () => {
+    const r = computePortConsumption(8000, 1, 'MGO', 2, 0.19, 10);
+    expect(r.dgRate).toBeCloseTo(1.6472630857142858, 10); // golden DG burn (unchanged)
+    expect(r.boilerMT).toBeCloseTo(0.19 * 10, 10);
+    const expectedMT = 1.6472630857142858 * 10 + 1.9;
     expect(r.perFuelMT.mgo).toBeCloseTo(expectedMT, 10);
     expect(r.totalMT).toBeCloseTo(expectedMT, 10);
   });

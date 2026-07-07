@@ -40,6 +40,8 @@ export const DEFAULT_CONSUMPTION_SETTINGS: ConsumptionSettings = {
   stby: { avgPowerMW: 10, engineCount: 2, fuelType: 'MGO' },
   thrusterIdleKW: 1080, // 3 × 360 kW, CE-validated 2026-07-07
   thrusterHighKW: 9000, // 3 × 3,000 kW, final 30 min of St/By
+  portBoilerRate: 0.19, // t/h MGO, CE-validated 2026-07-07 (was 0.20)
+  seaBoilerRate: 0.14, // t/h MGO, CE-validated 2026-07-07
 };
 
 /** Clamp ranges for every numeric parameter (UI + normalizer share these). */
@@ -50,6 +52,8 @@ export const SETTING_RANGES = {
   propAux: { min: 0, max: 5000 },
   thrusterIdleKW: { min: 0, max: 8000 },
   thrusterHighKW: { min: 0, max: 20000 },
+  portBoilerRate: { min: 0, max: 1 },
+  seaBoilerRate: { min: 0, max: 1 },
   tenderPowerKW: { min: 0, max: 40000 },
   engineCount: { min: 1, max: 4 },
   avgPowerMW: { min: 0, max: 50 },
