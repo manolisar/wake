@@ -58,6 +58,7 @@ export function normalizeSettings(
 ): ConsumptionSettings {
   const o = (v && typeof v === 'object' ? v : {}) as Record<string, unknown>;
   const port = (o.port && typeof o.port === 'object' ? o.port : {}) as Record<string, unknown>;
+  const tender = (o.tender && typeof o.tender === 'object' ? o.tender : {}) as Record<string, unknown>;
   const stby = (o.stby && typeof o.stby === 'object' ? o.stby : {}) as Record<string, unknown>;
   const R = SETTING_RANGES;
   return {
@@ -65,10 +66,15 @@ export function normalizeSettings(
     seaMargin: clamp(num(o.seaMargin, base.seaMargin), R.seaMargin.min, R.seaMargin.max),
     sfocDet: clamp(num(o.sfocDet, base.sfocDet), R.sfocDet.min, R.sfocDet.max),
     propAux: clamp(num(o.propAux, base.propAux), R.propAux.min, R.propAux.max),
-    maneuverAuxKW: clamp(
-      num(o.maneuverAuxKW, base.maneuverAuxKW),
-      R.maneuverAuxKW.min,
-      R.maneuverAuxKW.max
+    thrusterIdleKW: clamp(
+      num(o.thrusterIdleKW, base.thrusterIdleKW),
+      R.thrusterIdleKW.min,
+      R.thrusterIdleKW.max
+    ),
+    thrusterHighKW: clamp(
+      num(o.thrusterHighKW, base.thrusterHighKW),
+      R.thrusterHighKW.min,
+      R.thrusterHighKW.max
     ),
     engines: normalizeEngines(o.engines, base.engines),
     port: {
@@ -78,6 +84,19 @@ export function normalizeSettings(
         R.engineCount.max
       ),
       fuelType: fuel(port.fuelType, base.port.fuelType),
+    },
+    tender: {
+      totalPowerKW: clamp(
+        num(tender.totalPowerKW, base.tender.totalPowerKW),
+        R.tenderPowerKW.min,
+        R.tenderPowerKW.max
+      ),
+      engineCount: clamp(
+        Math.round(num(tender.engineCount, base.tender.engineCount)),
+        R.engineCount.min,
+        R.engineCount.max
+      ),
+      fuelType: fuel(tender.fuelType, base.tender.fuelType),
     },
     stby: {
       avgPowerMW: clamp(num(stby.avgPowerMW, base.stby.avgPowerMW), R.avgPowerMW.min, R.avgPowerMW.max),
@@ -109,9 +128,11 @@ export function resolveSettings(
     ...('seaMargin' in overrides ? { seaMargin: overrides.seaMargin } : null),
     ...('sfocDet' in overrides ? { sfocDet: overrides.sfocDet } : null),
     ...('propAux' in overrides ? { propAux: overrides.propAux } : null),
-    ...('maneuverAuxKW' in overrides ? { maneuverAuxKW: overrides.maneuverAuxKW } : null),
+    ...('thrusterIdleKW' in overrides ? { thrusterIdleKW: overrides.thrusterIdleKW } : null),
+    ...('thrusterHighKW' in overrides ? { thrusterHighKW: overrides.thrusterHighKW } : null),
     ...(overrides.engines ? { engines: overrides.engines } : null),
     port: { ...base.port, ...overrides.port },
+    tender: { ...base.tender, ...overrides.tender },
     stby: { ...base.stby, ...overrides.stby },
   };
   return normalizeSettings(merged, base);
@@ -123,14 +144,15 @@ export function normalizeOverrides(v: unknown): ConsumptionOverrides | undefined
   const o = v as Record<string, unknown>;
   const out: ConsumptionOverrides = {};
   const R = SETTING_RANGES;
-  const numIf = (key: 'hotelLoad' | 'seaMargin' | 'sfocDet' | 'propAux' | 'maneuverAuxKW', r: { min: number; max: number }) => {
+  const numIf = (key: 'hotelLoad' | 'seaMargin' | 'sfocDet' | 'propAux' | 'thrusterIdleKW' | 'thrusterHighKW', r: { min: number; max: number }) => {
     if (o[key] != null && Number.isFinite(Number(o[key]))) out[key] = clamp(Number(o[key]), r.min, r.max);
   };
   numIf('hotelLoad', R.hotelLoad);
   numIf('seaMargin', R.seaMargin);
   numIf('sfocDet', R.sfocDet);
   numIf('propAux', R.propAux);
-  numIf('maneuverAuxKW', R.maneuverAuxKW);
+  numIf('thrusterIdleKW', R.thrusterIdleKW);
+  numIf('thrusterHighKW', R.thrusterHighKW);
   if (Array.isArray(o.engines)) {
     out.engines = normalizeEngines(o.engines, DEFAULT_CONSUMPTION_SETTINGS.engines);
   }
@@ -141,6 +163,16 @@ export function normalizeOverrides(v: unknown): ConsumptionOverrides | undefined
       port.engineCount = clamp(Math.round(Number(p.engineCount)), R.engineCount.min, R.engineCount.max);
     if (FUELS.includes(p.fuelType as FuelType)) port.fuelType = p.fuelType as FuelType;
     if (Object.keys(port).length) out.port = port;
+  }
+  if (o.tender && typeof o.tender === 'object') {
+    const t = o.tender as Record<string, unknown>;
+    const tender: ConsumptionOverrides['tender'] = {};
+    if (t.totalPowerKW != null && Number.isFinite(Number(t.totalPowerKW)))
+      tender.totalPowerKW = clamp(Number(t.totalPowerKW), R.tenderPowerKW.min, R.tenderPowerKW.max);
+    if (t.engineCount != null && Number.isFinite(Number(t.engineCount)))
+      tender.engineCount = clamp(Math.round(Number(t.engineCount)), R.engineCount.min, R.engineCount.max);
+    if (FUELS.includes(t.fuelType as FuelType)) tender.fuelType = t.fuelType as FuelType;
+    if (Object.keys(tender).length) out.tender = tender;
   }
   if (o.stby && typeof o.stby === 'object') {
     const s = o.stby as Record<string, unknown>;

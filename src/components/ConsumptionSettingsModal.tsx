@@ -29,14 +29,15 @@ const FUEL_COLOR: Record<FuelType, string> = {
   LSFO: 'var(--color-indigo)',
 };
 
-type ScalarKey = 'hotelLoad' | 'seaMargin' | 'sfocDet' | 'propAux' | 'maneuverAuxKW';
+type ScalarKey = 'hotelLoad' | 'seaMargin' | 'sfocDet' | 'propAux' | 'thrusterIdleKW' | 'thrusterHighKW';
 
 const SCALARS: { key: ScalarKey; label: string; unit: string; step: number; hint: string }[] = [
   { key: 'hotelLoad', label: 'Hotel load', unit: 'kW', step: 100, hint: 'Accommodation & services' },
   { key: 'seaMargin', label: 'Sea margin', unit: '%', step: 1, hint: 'Weather / hull degradation' },
   { key: 'sfocDet', label: 'SFOC deterioration', unit: '%', step: 0.5, hint: 'Engine wear vs FAT curve' },
   { key: 'propAux', label: 'Prop auxiliaries', unit: 'kW', step: 100, hint: 'Steering, ventilation at sea' },
-  { key: 'maneuverAuxKW', label: 'Maneuvering aux', unit: 'kW', step: 100, hint: 'Thrusters etc. for speed-derived St/By' },
+  { key: 'thrusterIdleKW', label: 'Thrusters idle', unit: 'kW', step: 100, hint: 'St/By except final 30 min (3×360 kW)' },
+  { key: 'thrusterHighKW', label: 'Thrusters high', unit: 'kW', step: 500, hint: 'Final 30 min of St/By (3×3,000 kW)' },
 ];
 
 const FUELS: FuelType[] = ['HFO', 'MGO', 'LSFO'];
@@ -116,11 +117,11 @@ export function ConsumptionSettingsModal({
   const patchEngine = (id: number, patch: Partial<EngineState>) =>
     setEngines(view.engines.map((e) => (e.id === id ? { ...e, ...patch } : e)));
 
-  const setGroup = (group: 'port' | 'stby', patch: Record<string, unknown>) => {
+  const setGroup = (group: 'port' | 'tender' | 'stby', patch: Record<string, unknown>) => {
     if (onDefaults) setDraftDefaults((d) => ({ ...d, [group]: { ...d[group], ...patch } }));
     else setDraftOverrides((o) => ({ ...o, [group]: { ...o[group], ...patch } }));
   };
-  const resetGroup = (group: 'port' | 'stby') =>
+  const resetGroup = (group: 'port' | 'tender' | 'stby') =>
     setDraftOverrides((o) => {
       const next = { ...o };
       delete next[group];
@@ -147,7 +148,8 @@ export function ConsumptionSettingsModal({
     seaMargin: R.seaMargin,
     sfocDet: R.sfocDet,
     propAux: R.propAux,
-    maneuverAuxKW: R.maneuverAuxKW,
+    thrusterIdleKW: R.thrusterIdleKW,
+    thrusterHighKW: R.thrusterHighKW,
   };
 
   return (
@@ -331,7 +333,69 @@ export function ConsumptionSettingsModal({
                 </div>
               </div>
               <div className="mt-1.5 text-[0.58rem] text-faint">
-                Hotel-load DGs + fixed MGO boiler 0.18 t/h while alongside.
+                Hotel-load DGs + fixed MGO boiler 0.20 t/h while alongside (0.14 t/h at sea).
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-line p-3">
+              <div className={label}>
+                Tender stay
+                {!onDefaults && draftOverrides.tender && (
+                  <OverriddenPill onReset={() => resetGroup('tender')} disabled={!canEditTab} />
+                )}
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <label htmlFor="fuel-tender-kw" className={label}>
+                    Total · kW
+                  </label>
+                  <input
+                    id="fuel-tender-kw"
+                    type="number"
+                    className={input}
+                    min={R.tenderPowerKW.min}
+                    max={R.tenderPowerKW.max}
+                    step={500}
+                    value={view.tender.totalPowerKW}
+                    disabled={!canEditTab}
+                    onChange={(e) => setGroup('tender', { totalPowerKW: Number(e.target.value) })}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="fuel-tender-count" className={label}>
+                    DGs
+                  </label>
+                  <input
+                    id="fuel-tender-count"
+                    type="number"
+                    className={input}
+                    min={R.engineCount.min}
+                    max={R.engineCount.max}
+                    value={view.tender.engineCount}
+                    disabled={!canEditTab}
+                    onChange={(e) => setGroup('tender', { engineCount: Number(e.target.value) })}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="fuel-tender-fuel" className={label}>
+                    Fuel
+                  </label>
+                  <select
+                    id="fuel-tender-fuel"
+                    className={input}
+                    value={view.tender.fuelType}
+                    disabled={!canEditTab}
+                    onChange={(e) => setGroup('tender', { fuelType: e.target.value as FuelType })}
+                  >
+                    {FUELS.map((f) => (
+                      <option key={f}>{f}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="mt-1.5 text-[0.58rem] text-faint">
+                Type: Tender legs always run a 2nd DG — fixed total plant output while tendering
+                (hotel + tender ops), + the port boiler.
               </div>
             </div>
 
@@ -393,7 +457,8 @@ export function ConsumptionSettingsModal({
               </div>
               <div className="mt-1.5 text-[0.58rem] text-faint">
                 Used when a St/By phase has no distance and no per-leg MW override. The St/By DG
-                count &amp; fuel also apply to speed-derived phases.
+                count &amp; fuel also apply to speed-derived phases; any extra DG the load needs
+                runs on MGO (closed-loop standby).
               </div>
             </div>
           </div>

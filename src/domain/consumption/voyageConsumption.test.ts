@@ -1,6 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { computeVoyageConsumption, consumptionSignature } from './voyageConsumption';
-import { computeConsumption, computeStaticConsumption, computePortConsumption, closeLoopEngines } from './consumption';
+import { computeVoyageConsumption, consumptionSignature, thrusterAvgKW } from './voyageConsumption';
+import {
+  computeConsumption,
+  computeStbyConsumption,
+  computePortConsumption,
+  closeLoopEngines,
+  SEA_BOILER_RATE_MT_PER_HR,
+} from './consumption';
 import { blendLegFuel } from './blend';
 import { interpPropPower } from './interpolation';
 import { DEFAULT_CONSUMPTION_SETTINGS } from './engineDefaults';
@@ -27,7 +33,7 @@ describe('computeVoyageConsumption — voyage 586 fixture', () => {
     expect(r.legs[0].sea).toBeUndefined(); // embark port — no passage
   });
 
-  it('sea phase = passage hours × blended open/close rates (Basseterre)', () => {
+  it('sea phase = passage hours × blended open/close rates + sailing boiler (Basseterre)', () => {
     const sea = basseterre.sea!;
     expect(sea.hours).toBeCloseTo(62, 5); // FAW 17:00 (-5) → ETA 08:00 (-4), 3 days on
     expect(sea.speed).toBeCloseTo(1130 / 62, 5);
@@ -36,20 +42,26 @@ describe('computeVoyageConsumption — voyage 586 fixture', () => {
     const open = computeConsumption(sea.speed, settings.engines, settings);
     const close = computeConsumption(sea.speed, closeLoopEngines(settings.engines), settings);
     const expected = blendLegFuel(open, close, 62, 58);
+    const boiler = SEA_BOILER_RATE_MT_PER_HR * 62; // sailing boiler, MGO
+    expect(sea.boilerMT).toBeCloseTo(boiler, 10);
     expect(sea.hfoMT).toBeCloseTo(expected.hfoMT, 10);
-    expect(sea.mgoMT).toBeCloseTo(expected.mgoMT, 10);
-    expect(sea.totalMT).toBeCloseTo(expected.totalMT, 10);
+    expect(sea.mgoMT).toBeCloseTo(expected.mgoMT + boiler, 10);
+    expect(sea.totalMT).toBeCloseTo(expected.totalMT + boiler, 10);
     expect(sea.closeResult).toBeDefined();
   });
 
-  it('st/by with distance data derives power from the maneuvering speed', () => {
+  it('st/by with distance data derives power from the maneuvering speed + thruster profile', () => {
     const arr = basseterre.stbyArr!;
     expect(arr.source).toBe('speed');
     expect(arr.speed).toBeCloseTo(11, 5); // 11 nm / 1 h
-    const expectedKW = interpPropPower(11) + settings.maneuverAuxKW + settings.hotelLoad;
+    // 1 h phase: 30 min idle (1,080 kW) + final 30 min high (9,000 kW) → 5,040 kW avg.
+    const thrusters = thrusterAvgKW(1, settings);
+    expect(thrusters).toBeCloseTo(5040, 8);
+    const expectedKW = interpPropPower(11) + thrusters + settings.hotelLoad;
     expect(arr.powerKW).toBeCloseTo(expectedKW, 6);
-    const s = computeStaticConsumption(expectedKW, settings.stby.engineCount, settings.stby.fuelType, settings.sfocDet);
+    const s = computeStbyConsumption(expectedKW, settings.stby.engineCount, settings.stby.fuelType, settings.sfocDet);
     expect(arr.totalMT).toBeCloseTo(s.rate * 1, 10); // 1 h phase
+    expect(arr.extraMgoEngines).toBe(s.extraMgoEngines);
   });
 
   it('st/by without distance data falls back to the default power', () => {
@@ -66,7 +78,16 @@ describe('computeVoyageConsumption — voyage 586 fixture', () => {
       settings.hotelLoad, settings.port.engineCount, settings.port.fuelType, settings.sfocDet, 9
     );
     expect(port.totalMT).toBeCloseTo(expected.totalMT, 10);
-    expect(port.boilerMT).toBeCloseTo(0.18 * 9, 10);
+    expect(port.boilerMT).toBeCloseTo(0.2 * 9, 10);
+  });
+
+  it('totals.boilerMT rolls up port and sailing boilers together', () => {
+    let boiler = 0;
+    for (const l of r.legs) {
+      boiler += (l.sea?.boilerMT ?? 0) + (l.portStay?.boilerMT ?? 0);
+    }
+    expect(boiler).toBeGreaterThan(0);
+    expect(r.totals.boilerMT).toBeCloseTo(boiler, 10);
   });
 
   it('totals are additive across all phases and fuels', () => {
@@ -89,6 +110,52 @@ describe('computeVoyageConsumption — voyage 586 fixture', () => {
     expect(r.settings).toEqual(settings);
     expect(r.by).toBe('Test');
     expect(r.computedAt).toBeTruthy();
+  });
+});
+
+describe('tender stays (Type: Tender)', () => {
+  it('a tender leg runs the tender plant: fixed total output on 2 DGs + port boiler', () => {
+    const voyage = clone(seed['586']);
+    const idx = voyage.legs.findIndex((l) => l.port.startsWith('Basseterre'));
+    voyage.legs[idx].type = 'Tender';
+    const r = computeVoyageConsumption(voyage, settings, { by: 'Test' });
+    const stay = r.legs.find((l) => l.port.startsWith('Basseterre'))!.portStay!;
+    expect(stay.tender).toBe(true);
+    expect(stay.hours).toBeCloseTo(9, 5);
+    const expected = computePortConsumption(
+      settings.tender.totalPowerKW, settings.tender.engineCount, settings.tender.fuelType, settings.sfocDet, 9
+    );
+    expect(settings.tender.totalPowerKW).toBe(11000); // CE 2026-07-07
+    expect(settings.tender.engineCount).toBe(2);
+    expect(stay.totalMT).toBeCloseTo(expected.totalMT, 10);
+    expect(stay.dgRate).toBeCloseTo(expected.dgRate, 10);
+    expect(stay.boilerMT).toBeCloseTo(0.2 * 9, 10); // port boiler still applies
+  });
+
+  it('a normal port leg is unaffected by the tender assumptions', () => {
+    const r = computeVoyageConsumption(seed['586'], settings, { by: 'Test' });
+    const stay = r.legs.find((l) => l.port.startsWith('Basseterre'))!.portStay!;
+    expect(stay.tender).toBeUndefined();
+    const expected = computePortConsumption(
+      settings.hotelLoad, settings.port.engineCount, settings.port.fuelType, settings.sfocDet, 9
+    );
+    expect(stay.totalMT).toBeCloseTo(expected.totalMT, 10);
+  });
+});
+
+describe('thrusterAvgKW (CE maneuvering profile)', () => {
+  it('weights idle hours against the final-30-min high output', () => {
+    // 2 h: 1.5 h × 1,080 + 0.5 h × 9,000 = 6,120 kWh → 3,060 kW average.
+    expect(thrusterAvgKW(2, settings)).toBeCloseTo((1080 * 1.5 + 9000 * 0.5) / 2, 10);
+  });
+
+  it('phases of 30 minutes or less run entirely at high output', () => {
+    expect(thrusterAvgKW(0.5, settings)).toBeCloseTo(9000, 10);
+    expect(thrusterAvgKW(0.25, settings)).toBeCloseTo(9000, 10);
+  });
+
+  it('zero-length phases contribute nothing', () => {
+    expect(thrusterAvgKW(0, settings)).toBe(0);
   });
 });
 

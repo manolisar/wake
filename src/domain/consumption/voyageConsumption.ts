@@ -6,10 +6,16 @@
 //   Sea passage — prev port's FAW → this ETA, at the solved passage speed.
 //                 openLoop (HH:MM on the leg) splits DG4 between HFO (open
 //                 loop) and MGO (close loop) with a 2 h changeover blend.
+//                 Plus the sailing boiler (MGO, 0.14 t/h) for every hour.
 //   St/By arr   — ETA → Arr. Power: per-leg MW override > speed-derived
-//                 (trial curve at the maneuvering speed + maneuvering aux +
-//                 hotel) > the fallback default (stby.avgPowerMW).
-//   Port stay   — Arr → Dep. Hotel-load DGs + fixed MGO boiler.
+//                 (trial curve at the maneuvering speed + the thruster
+//                 profile + hotel) > the fallback default (stby.avgPowerMW).
+//                 Standby is modeled closed-loop; DGs needed beyond the
+//                 configured St/By count run on MGO (CE 2026-07-07).
+//   Port stay   — Arr → Dep. Hotel-load DGs + fixed MGO boiler (0.20 t/h).
+//                 Tender legs instead run the tender plant assumption: a
+//                 fixed total output on the tender DG count (CE 2026-07-07:
+//                 11,000 kW on 2 DGs), + the same port boiler.
 //   St/By dep   — Dep → FAW. Same power resolution as arrival.
 
 import type { Leg, Voyage } from '../../types';
@@ -18,8 +24,9 @@ import { hhmmToMin } from '../time';
 import {
   computeConsumption,
   computePortConsumption,
-  computeStaticConsumption,
+  computeStbyConsumption,
   closeLoopEngines,
+  SEA_BOILER_RATE_MT_PER_HR,
 } from './consumption';
 import { interpPropPower } from './interpolation';
 import { blendLegFuel, splitLegHours } from './blend';
@@ -46,6 +53,22 @@ export function consumptionSignature(voyage: Voyage, settings: ConsumptionSettin
   return JSON.stringify([settings, voyage.legs.map(legSignature)]);
 }
 
+/** The high-output thruster window at the end of every St/By phase. */
+export const THRUSTER_HIGH_HOURS = 0.5;
+
+/**
+ * Average thruster/steering power over a St/By phase: idle thrusters for the
+ * whole period except the final 30 minutes, which run at high output for
+ * docking/undocking (CE-validated profile, 2026-07-07). Phases shorter than
+ * 30 minutes are all high output.
+ */
+export function thrusterAvgKW(hours: number, settings: ConsumptionSettings): number {
+  if (hours <= 0) return 0;
+  const high = Math.min(hours, THRUSTER_HIGH_HOURS);
+  const idle = hours - high;
+  return (settings.thrusterIdleKW * idle + settings.thrusterHighKW * high) / hours;
+}
+
 function stbyPhase(
   minutes: number,
   overrideMW: string,
@@ -65,9 +88,9 @@ function stbyPhase(
     source = 'override';
   } else if (stbySpeed != null && stbySpeed > 0) {
     // Speed-derived: trial-curve propulsion at the maneuvering speed, plus the
-    // maneuvering-gear allowance and hotel. No sea margin — that is an
-    // open-water weather allowance, not a harbour one.
-    powerKW = interpPropPower(stbySpeed) + settings.maneuverAuxKW + settings.hotelLoad;
+    // thruster profile and hotel. No sea margin — that is an open-water
+    // weather allowance, not a harbour one.
+    powerKW = interpPropPower(stbySpeed) + thrusterAvgKW(hours, settings) + settings.hotelLoad;
     source = 'speed';
     speed = stbySpeed;
   } else {
@@ -75,11 +98,12 @@ function stbyPhase(
     source = 'default';
   }
 
-  const r = computeStaticConsumption(powerKW, settings.stby.engineCount, settings.stby.fuelType, settings.sfocDet);
+  const r = computeStbyConsumption(powerKW, settings.stby.engineCount, settings.stby.fuelType, settings.sfocDet);
   if (r.insufficient) {
     warnings.push(
       `${label}: demand ${(powerKW / 1000).toFixed(1)} MW exceeds ` +
-        `${settings.stby.engineCount} DG capacity at ${settings.stby.fuelType} limits`
+        `${settings.stby.engineCount + r.extraMgoEngines} DG capacity` +
+        (r.extraMgoEngines > 0 ? ` (incl. ${r.extraMgoEngines} extra on MGO)` : ` at ${settings.stby.fuelType} limits`)
     );
   }
   return {
@@ -94,6 +118,7 @@ function stbyPhase(
     powerKW,
     engineCount: settings.stby.engineCount,
     fuelType: settings.stby.fuelType,
+    extraMgoEngines: r.extraMgoEngines,
   };
 }
 
@@ -132,17 +157,23 @@ export function computeVoyageConsumption(
       if (open.insufficient || close?.insufficient) {
         warnings.push(`${label}: sea passage demand exceeds available DG capacity`);
       }
+      // Sailing boiler: fixed MGO burn for every passage hour (CE 2026-07-07).
+      const seaBoilerMT = SEA_BOILER_RATE_MT_PER_HR * hours;
       lc.sea = {
         hours,
         speed,
         openLoopHours,
         changeoverHours: splitLegHours(hours, openLoopHours).changeover,
         ...fuel,
+        mgoMT: fuel.mgoMT + seaBoilerMT,
+        totalMT: fuel.totalMT + seaBoilerMT,
+        boilerMT: seaBoilerMT,
         insufficient: open.insufficient || !!close?.insufficient,
         openResult: open,
         closeResult: close,
       };
       totals.seaHrs += hours;
+      totals.boilerMT += seaBoilerMT;
     } else {
       // Warn only for follow-on port calls — the first port has no passage.
       const hasPrevPort = voyage.legs.some(
@@ -172,11 +203,22 @@ export function computeVoyageConsumption(
     // ── Port stay ──
     if (view.portMinNum != null && view.portMinNum > 0) {
       const hours = view.portMinNum / 60;
-      const p = computePortConsumption(
-        settings.hotelLoad, settings.port.engineCount, settings.port.fuelType, settings.sfocDet, hours
-      );
+      // Tendering always runs the tender plant (2nd DG online, fixed total
+      // output) instead of the plain hotel load.
+      const isTender = leg.type === 'Tender';
+      const p = isTender
+        ? computePortConsumption(
+            settings.tender.totalPowerKW, settings.tender.engineCount, settings.tender.fuelType, settings.sfocDet, hours
+          )
+        : computePortConsumption(
+            settings.hotelLoad, settings.port.engineCount, settings.port.fuelType, settings.sfocDet, hours
+          );
       if (p.insufficient) {
-        warnings.push(`${label}: hotel load exceeds ${settings.port.engineCount} DG port capacity`);
+        warnings.push(
+          isTender
+            ? `${label}: tender load exceeds ${settings.tender.engineCount} DG capacity`
+            : `${label}: hotel load exceeds ${settings.port.engineCount} DG port capacity`
+        );
       }
       lc.portStay = {
         hours,
@@ -187,6 +229,7 @@ export function computeVoyageConsumption(
         insufficient: p.insufficient,
         boilerMT: p.boilerMT,
         dgRate: p.dgRate,
+        ...(isTender ? { tender: true } : null),
       };
       totals.portHrs += hours;
       totals.boilerMT += p.boilerMT;

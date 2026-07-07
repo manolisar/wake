@@ -147,6 +147,7 @@ function StbyRow({
         )}
         <span className="ml-2 font-mono text-[0.58rem] text-faint">
           {phase.engineCount} DG · {phase.fuelType}
+          {(phase.extraMgoEngines ?? 0) > 0 && ` +${phase.extraMgoEngines} MGO`}
         </span>
       </td>
       <FuelCells p={phase} />
@@ -254,7 +255,7 @@ export function ConsumptionReport({
             <span>Sea margin <b className="font-mono text-ink">{s.seaMargin}%</b></span>
             <span>SFOC det. <b className="font-mono text-ink">{s.sfocDet}%</b></span>
             <span>Prop aux <b className="font-mono text-ink">{s.propAux} kW</b></span>
-            <span>Maneuver aux <b className="font-mono text-ink">{s.maneuverAuxKW} kW</b></span>
+            <span>Thrusters <b className="font-mono text-ink">{s.thrusterIdleKW} / {s.thrusterHighKW} kW</b></span>
             <span>
               DGs{' '}
               {s.engines.map((e) => (
@@ -264,6 +265,7 @@ export function ConsumptionReport({
               ))}
             </span>
             <span>Port <b className="font-mono text-ink">{s.port.engineCount} DG · {s.port.fuelType}</b></span>
+            <span>Tender <b className="font-mono text-ink">{s.tender.engineCount} DG · {(s.tender.totalPowerKW / 1000).toFixed(1)} MW · {s.tender.fuelType}</b></span>
             <span>St/By fallback <b className="font-mono text-ink">{s.stby.avgPowerMW} MW · {s.stby.engineCount} DG · {s.stby.fuelType}</b></span>
             {offline.length > 0 && <span className="text-amber">Offline: {offline.join(', ')}</span>}
           </div>
@@ -327,6 +329,11 @@ export function ConsumptionReport({
                               {lc.sea.changeoverHours > 0 && ` · c/o ${hrs(lc.sea.changeoverHours)}`}
                             </span>
                           )}
+                          {lc.sea.boilerMT != null && (
+                            <span className="ml-2 font-mono text-[0.58rem] text-faint">
+                              boiler {lc.sea.boilerMT.toFixed(2)} MT
+                            </span>
+                          )}
                           {lc.sea.insufficient && <span className="ml-1 text-amber">⚠ capacity</span>}
                         </td>
                         <FuelCells p={lc.sea} />
@@ -356,7 +363,9 @@ export function ConsumptionReport({
                   )}
                   {lc.portStay && (
                     <tr className="border-t border-line/50">
-                      <td className="py-1 pl-7 pr-2 text-[0.7rem] text-muted">Port stay</td>
+                      <td className="py-1 pl-7 pr-2 text-[0.7rem] text-muted">
+                        {lc.portStay.tender ? 'Tender stay' : 'Port stay'}
+                      </td>
                       <td className="px-2 py-1 text-right font-mono text-[0.7rem] tabular-nums">{hrs(lc.portStay.hours)}</td>
                       <td className="px-2 py-1 text-[0.62rem] text-muted">
                         <span className="font-mono text-[0.58rem]">

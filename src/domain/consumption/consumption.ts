@@ -33,8 +33,13 @@ export interface StaticConsumptionResult {
   insufficient: boolean;
 }
 
-/** Port boiler burns MGO at a fixed rate for every hour the vessel is in port. */
-export const BOILER_RATE_MT_PER_HR = 0.18;
+/** Port boiler burns MGO at a fixed rate for every hour the vessel is in port.
+ *  CE-validated 2026-07-07 (diverges from the reference planner's 0.18). */
+export const PORT_BOILER_RATE_MT_PER_HR = 0.2;
+
+/** Sailing boiler burns MGO at a fixed rate for every sea-passage hour.
+ *  CE-validated 2026-07-07 (the reference planner has no sailing boiler). */
+export const SEA_BOILER_RATE_MT_PER_HR = 0.14;
 
 export interface PortConsumption {
   /** DG (hotel load) rate, t/hr — boiler excluded */
@@ -167,7 +172,67 @@ export function computeStaticConsumption(
 }
 
 /**
- * Port consumption = DG hotel-load burn + a fixed MGO boiler burn (0.18 t/hr),
+ * St/By plant burn with the closed-loop standby assumptions (CE 2026-07-07):
+ * standby runs closed-loop at all times, the configured St/By DGs burn the
+ * configured fuel, and whenever the load needs more DGs than configured each
+ * extra engine runs on MGO (up to the 4 installed). Within the configured
+ * capacity this is identical to computeStaticConsumption.
+ */
+export interface StbyConsumptionResult extends StaticConsumptionResult {
+  /** DGs brought online on MGO beyond the configured count. */
+  extraMgoEngines: number;
+}
+
+export function computeStbyConsumption(
+  totalPowerKW: number,
+  engineCount: number,
+  fuelType: FuelType,
+  sfocDet: number
+): StbyConsumptionResult {
+  const base = computeStaticConsumption(totalPowerKW, engineCount, fuelType, sfocDet);
+  if (!base.insufficient || engineCount <= 0) return { ...base, extraMgoEngines: 0 };
+
+  const baseMaxKW = NOMINAL_KW * LOAD_LIMITS[fuelType];
+  const mgoMaxKW = NOMINAL_KW * LOAD_LIMITS.MGO;
+  let extraMgoEngines = 0;
+  let capacity = engineCount * baseMaxKW;
+  while (engineCount + extraMgoEngines < 4 && capacity < totalPowerKW) {
+    extraMgoEngines++;
+    capacity += mgoMaxKW;
+  }
+  if (extraMgoEngines === 0) return { ...base, extraMgoEngines: 0 };
+
+  // Equal-share the load across the mixed set (same waterfall as at sea).
+  const units = [
+    ...Array.from({ length: engineCount }, (_, i) => ({
+      id: i + 1, available: true, fuel: fuelType, loadLimit: LOAD_LIMITS[fuelType], maxKW: baseMaxKW,
+    })),
+    ...Array.from({ length: extraMgoEngines }, (_, i) => ({
+      id: engineCount + i + 1, available: true, fuel: 'MGO' as FuelType, loadLimit: LOAD_LIMITS.MGO, maxKW: mgoMaxKW,
+    })),
+  ];
+  const loads = distributeLoad(units, Math.min(totalPowerKW, capacity));
+  const perFuel = { hfo: 0, mgo: 0, lsfo: 0 };
+  units.forEach((u) => {
+    const kw = loads.get(u.id) || 0;
+    if (kw <= 0) return;
+    const sfoc = interpSFOC(kw / NOMINAL_KW) * (1 + sfocDet / 100);
+    const cons = (sfoc * kw) / 1e6;
+    if (u.fuel === 'HFO') perFuel.hfo += cons;
+    else if (u.fuel === 'LSFO') perFuel.lsfo += cons;
+    else perFuel.mgo += cons;
+  });
+  return {
+    rate: perFuel.hfo + perFuel.mgo + perFuel.lsfo,
+    perFuel,
+    availablePowerKW: capacity,
+    insufficient: totalPowerKW > capacity,
+    extraMgoEngines,
+  };
+}
+
+/**
+ * Port consumption = DG hotel-load burn + a fixed MGO boiler burn (0.20 t/hr),
  * both applied for the same `hours`. Single source of truth so the port box,
  * the voyage summary, and the export all roll up boiler identically.
  */
@@ -179,7 +244,7 @@ export function computePortConsumption(
   hours: number
 ): PortConsumption {
   const dg = computeStaticConsumption(hotelLoadKW, engineCount, fuelType, sfocDet);
-  const boilerMT = BOILER_RATE_MT_PER_HR * hours;
+  const boilerMT = PORT_BOILER_RATE_MT_PER_HR * hours;
   const perFuelMT = {
     hfo: dg.perFuel.hfo * hours,
     mgo: dg.perFuel.mgo * hours + boilerMT,
@@ -187,7 +252,7 @@ export function computePortConsumption(
   };
   return {
     dgRate: dg.rate,
-    boilerRate: BOILER_RATE_MT_PER_HR,
+    boilerRate: PORT_BOILER_RATE_MT_PER_HR,
     boilerMT,
     perFuelMT,
     totalMT: perFuelMT.hfo + perFuelMT.mgo + perFuelMT.lsfo,

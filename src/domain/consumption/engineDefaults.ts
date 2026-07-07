@@ -36,8 +36,10 @@ export const DEFAULT_CONSUMPTION_SETTINGS: ConsumptionSettings = {
     { id: 4, available: true, fuel: 'HFO' },
   ],
   port: { engineCount: 1, fuelType: 'MGO' },
+  tender: { totalPowerKW: 11000, engineCount: 2, fuelType: 'MGO' }, // CE 2026-07-07
   stby: { avgPowerMW: 10, engineCount: 2, fuelType: 'MGO' },
-  maneuverAuxKW: 2000,
+  thrusterIdleKW: 1080, // 3 × 360 kW, CE-validated 2026-07-07
+  thrusterHighKW: 9000, // 3 × 3,000 kW, final 30 min of St/By
 };
 
 /** Clamp ranges for every numeric parameter (UI + normalizer share these). */
@@ -46,7 +48,9 @@ export const SETTING_RANGES = {
   seaMargin: { min: -10, max: 20 },
   sfocDet: { min: 0, max: 5 },
   propAux: { min: 0, max: 5000 },
-  maneuverAuxKW: { min: 0, max: 8000 },
+  thrusterIdleKW: { min: 0, max: 8000 },
+  thrusterHighKW: { min: 0, max: 20000 },
+  tenderPowerKW: { min: 0, max: 40000 },
   engineCount: { min: 1, max: 4 },
   avgPowerMW: { min: 0, max: 50 },
 } as const;

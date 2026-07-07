@@ -69,4 +69,9 @@ describe('normalizeOverrides', () => {
     const o = normalizeOverrides({ hotelLoad: 30000, bogus: 1, port: { fuelType: 'LSFO' } });
     expect(o).toEqual({ hotelLoad: 20000, port: { fuelType: 'LSFO' } });
   });
+
+  it('parses and clamps tender overrides', () => {
+    const o = normalizeOverrides({ tender: { totalPowerKW: 99999, engineCount: 3, fuelType: 'XX' } });
+    expect(o).toEqual({ tender: { totalPowerKW: 40000, engineCount: 3 } });
+  });
 });

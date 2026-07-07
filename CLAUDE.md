@@ -156,7 +156,10 @@ The SL Class engine, ported verbatim from `~/Projects/voyage-planner` (4 × Wär
 - `trialData.ts` — FAT curves (speed → prop kW, load fraction → SFOC g/kWh).
 - `interpolation.ts` / `loadSharing.ts` / `consumption.ts` — speed + engines + settings →
   `CalculationResult` (per-fuel t/h, per-DG loads, overload flags); `computeStaticConsumption`
-  (fixed power) and `computePortConsumption` (hotel DGs + fixed MGO boiler 0.18 t/h);
+  (fixed power), `computePortConsumption` (hotel DGs + fixed MGO boiler 0.20 t/h), and
+  `computeStbyConsumption` (closed-loop standby: configured DGs on the configured fuel, any extra
+  DG the load needs runs on MGO — "a 3rd engine runs MGO"); a sailing boiler
+  (`SEA_BOILER_RATE_MT_PER_HR` 0.14 t/h MGO) burns for every sea-passage hour;
   `closeLoopEngines` forces DG4 HFO→MGO for close-loop waters. Load limits HFO/LSFO 0.8, MGO 0.7;
   selection priority HFO → LSFO → MGO; min 2 DGs at speed.
 - `blend.ts` — a leg's `openLoop` hours split it into pure-open / 2 h changeover (50/50 blend) /
@@ -166,16 +169,25 @@ The SL Class engine, ported verbatim from `~/Projects/voyage-planner` (4 × Wär
   clamped to `SETTING_RANGES`, illegal fuels corrected. Tolerant normalizers for bundle parsing.
 - `voyageConsumption.ts` — `computeVoyageConsumption(voyage, settings)` maps `computeVoyage`'s leg
   views onto the engine. Per port call: **Sea passage** (passage hours × blended open/close rates at
-  the solved or target speed), **St/By arrival/departure** (power = per-leg MW override, else
-  speed-derived `interpPropPower(stbySpeed) + maneuverAuxKW + hotelLoad` when a St/By distance
-  exists, else the `stby.avgPowerMW` fallback), **Port stay** (hotel DGs + boiler). Produces the
+  the solved or target speed, + the 0.14 t/h sailing boiler), **St/By arrival/departure** (power =
+  per-leg MW override, else speed-derived `interpPropPower(stbySpeed) + thrusterAvgKW(hours) +
+  hotelLoad` when a St/By distance exists, else the `stby.avgPowerMW` fallback), **Port stay**
+  (hotel DGs + boiler; **Tender legs** instead run the tender plant — a 2nd DG always online with
+  a fixed total output, CE 2026-07-07: 11,000 kW on 2 DGs, `settings.tender`). Produces the
   `VoyageConsumption` snapshot: resolved settings, per-leg phases with DG breakdowns, totals by
   fuel, warnings, and an `inputSignature` used to flag the report **stale** when legs/parameters
   change after a run.
 
-**`maneuverAuxKW` (default 2000 kW)** is a domain assumption: at 3–8 kn the trial curve gives only
-~1.5–3.6 MW of propulsion, but real maneuvering burns thruster/steering power the curve can't see.
-It is visible and editable in Fuel Setup — Chief Engineer to validate.
+**Maneuvering assumptions (Chief-Engineer-validated, 2026-07-07)** — the trial curve only knows
+the propeller, so St/By phases add a thruster **profile** instead of a flat allowance:
+`thrusterIdleKW` (default 1,080 = 3 × 360 kW) for the whole phase except the final 30 minutes,
+which run at `thrusterHighKW` (default 9,000 = 3 × 3,000 kW); `thrusterAvgKW` time-weights the two
+(a ≤ 30 min phase is all high output). Both are visible and editable in Fuel Setup. Standby is
+modeled **closed-loop at all times**; whenever the load needs more DGs than the configured St/By
+count, each extra engine is assumed to run on MGO (`computeStbyConsumption`). Boilers: **port
+0.20 t/h**, **sailing 0.14 t/h**, both MGO. These replaced the pre-2026-07-07 `maneuverAuxKW`
+(2,000 kW flat) and 0.18 t/h port-only boiler; old snapshots simply flag stale and recalculate,
+and old files carrying `maneuverAuxKW` drop it on read (tolerant normalizers).
 
 UI: **Fuel Setup** (`ConsumptionSettingsModal`, ship-defaults + this-voyage tabs with override
 pills) and **Consumption** (runs the calc; in edit mode the snapshot + a version entry persist to
@@ -195,6 +207,9 @@ snapshot's numbers are trusted on read, its envelope validated — garbage blobs
 
 The engine is golden-locked: `consumption.test.ts` pins rates captured from the reference engine in
 `~/Projects/voyage-planner` for identical inputs. If numbers must change, change them there first
-or document the divergence.
+or document the divergence. **Documented divergences (CE assumptions, 2026-07-07):** port boiler
+0.20 t/h vs the reference's 0.18, the sailing boiler (reference has none), the thruster profile
+replacing the flat maneuvering aux, and the MGO St/By escalation (app-only). The DG SFOC/load
+math itself remains golden-locked.
 
-*Last updated: 2026-06-26.*
+*Last updated: 2026-07-07.*

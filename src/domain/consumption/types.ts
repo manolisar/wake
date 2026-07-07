@@ -64,6 +64,14 @@ export interface PortSetup {
   fuelType: FuelType;
 }
 
+export interface TenderSetup {
+  /** Total plant output while tendering (hotel + tender ops).
+   *  CE-validated 2026-07-07: 11,000 kW on 2 DGs. */
+  totalPowerKW: number;
+  engineCount: number;
+  fuelType: FuelType;
+}
+
 export interface StbySetup {
   /** Fallback TOTAL plant power when a St/By phase has no distance data. */
   avgPowerMW: number;
@@ -75,13 +83,20 @@ export interface StbySetup {
 export interface ConsumptionSettings extends VesselSettings {
   engines: EngineState[]; // 4 DGs: availability + fuel
   port: PortSetup;
+  tender: TenderSetup;
   stby: StbySetup;
   /**
-   * Thruster/steering allowance (kW) added on top of the trial-curve
-   * propulsion power for speed-derived St/By phases — the curve only knows
-   * the propeller, not maneuvering gear. Chief Engineer to validate.
+   * Thruster/steering load (kW) during the St/By idle period — the whole
+   * phase except the final 30 minutes. CE-validated 2026-07-07: 3 × 360 kW.
+   * Added on top of trial-curve propulsion for speed-derived St/By phases —
+   * the curve only knows the propeller, not maneuvering gear.
    */
-  maneuverAuxKW: number;
+  thrusterIdleKW: number;
+  /**
+   * Thruster output (kW) during the final 30 minutes of a St/By phase
+   * (docking/undocking). CE-validated 2026-07-07: 3 × 3,000 kW.
+   */
+  thrusterHighKW: number;
 }
 
 /** Per-voyage overrides; anything unset falls through to the ship defaults. */
@@ -90,9 +105,11 @@ export interface ConsumptionOverrides {
   seaMargin?: number;
   sfocDet?: number;
   propAux?: number;
-  maneuverAuxKW?: number;
+  thrusterIdleKW?: number;
+  thrusterHighKW?: number;
   engines?: EngineState[]; // whole-array override (all 4 DGs)
   port?: Partial<PortSetup>;
+  tender?: Partial<TenderSetup>;
   stby?: Partial<StbySetup>;
 }
 
@@ -112,6 +129,9 @@ export interface SeaPhase extends PhaseConsumption {
   /** Hours in open-loop waters (undefined = whole passage open-loop). */
   openLoopHours?: number;
   changeoverHours: number;
+  /** Sailing boiler burn (MGO), folded into mgoMT/totalMT. Absent in
+   *  snapshots persisted before the sailing-boiler assumption (2026-07-07). */
+  boilerMT?: number;
   /** DG breakdown with the set fuels (open-loop regime). */
   openResult: CalculationResult;
   /** DG breakdown with DG4 forced to MGO — present when the leg splits. */
@@ -127,12 +147,20 @@ export interface StbyPhase extends PhaseConsumption {
   powerKW: number;
   engineCount: number;
   fuelType: FuelType;
+  /** DGs brought online on MGO beyond the configured St/By count because the
+   *  load needed them (CE assumption: a 3rd engine runs MGO). Absent in
+   *  snapshots persisted before 2026-07-07. */
+  extraMgoEngines?: number;
 }
 
 export interface PortPhase extends PhaseConsumption {
   boilerMT: number;
   /** DG (hotel load) rate, t/h — boiler excluded. */
   dgRate: number;
+  /** True when this stay ran on the tender assumptions (Type: Tender leg —
+   *  fixed total output on the tender DG count). Absent for normal port
+   *  stays and in snapshots persisted before 2026-07-07. */
+  tender?: boolean;
 }
 
 export interface LegConsumption {

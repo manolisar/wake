@@ -1,13 +1,19 @@
 // Golden numbers in this file were captured by running the REFERENCE engine in
 // ~/Projects/voyage-planner (npx tsx, 2026-07-05) with identical inputs. The
 // ported engine must reproduce them exactly.
+//
+// Documented divergences from the reference (CE-validated assumptions,
+// 2026-07-07): port boiler 0.20 t/h (reference: 0.18), a sailing boiler
+// 0.14 t/h the reference lacks, and St/By escalation onto MGO
+// (computeStbyConsumption — app-only, no reference counterpart).
 import { describe, it, expect } from 'vitest';
 import {
   computeConsumption,
   computeStaticConsumption,
+  computeStbyConsumption,
   computePortConsumption,
   closeLoopEngines,
-  BOILER_RATE_MT_PER_HR,
+  PORT_BOILER_RATE_MT_PER_HR,
 } from './consumption';
 import { DEFAULT_CONSUMPTION_SETTINGS } from './engineDefaults';
 import type { EngineState } from './types';
@@ -88,12 +94,51 @@ describe('computeStaticConsumption (golden cross-check)', () => {
   });
 });
 
-describe('computePortConsumption (golden cross-check)', () => {
-  it('8 MW hotel / 1 DG / MGO / det 2 / 10 h → 18.2726 MT incl. 1.8 MT boiler', () => {
+describe('computePortConsumption (DG golden cross-check, boiler 0.20 per CE)', () => {
+  it('8 MW hotel / 1 DG / MGO / det 2 / 10 h → 18.4726 MT incl. 2.0 MT boiler', () => {
     const r = computePortConsumption(8000, 1, 'MGO', 2, 10);
-    expect(r.dgRate).toBeCloseTo(1.6472630857142858, 10);
-    expect(r.boilerMT).toBeCloseTo(BOILER_RATE_MT_PER_HR * 10, 10);
-    expect(r.perFuelMT.mgo).toBeCloseTo(18.272630857142858, 10);
-    expect(r.totalMT).toBeCloseTo(18.272630857142858, 10);
+    expect(r.dgRate).toBeCloseTo(1.6472630857142858, 10); // golden (reference engine)
+    expect(r.boilerMT).toBeCloseTo(PORT_BOILER_RATE_MT_PER_HR * 10, 10);
+    expect(r.boilerMT).toBeCloseTo(2.0, 10);
+    expect(r.perFuelMT.mgo).toBeCloseTo(18.472630857142858, 10);
+    expect(r.totalMT).toBeCloseTo(18.472630857142858, 10);
+  });
+});
+
+describe('computeStbyConsumption (closed-loop standby, extra DGs on MGO)', () => {
+  it('within the configured capacity it equals computeStaticConsumption', () => {
+    const r = computeStbyConsumption(10000, 2, 'MGO', 2);
+    const s = computeStaticConsumption(10000, 2, 'MGO', 2);
+    expect(r.rate).toBeCloseTo(s.rate, 12);
+    expect(r.perFuel).toEqual(s.perFuel);
+    expect(r.extraMgoEngines).toBe(0);
+    expect(r.insufficient).toBe(false);
+  });
+
+  it('brings a 3rd DG online on MGO when 2 configured DGs cannot carry the load', () => {
+    // 30 MW > 2 × 16800 × 0.7 = 23.52 MW → +1 MGO engine, 10 MW each.
+    const r = computeStbyConsumption(30000, 2, 'MGO', 2);
+    expect(r.extraMgoEngines).toBe(1);
+    expect(r.insufficient).toBe(false);
+    // Equal share across 3 identical-fuel engines ≡ static with 3 DGs.
+    const s = computeStaticConsumption(30000, 3, 'MGO', 2);
+    expect(r.rate).toBeCloseTo(s.rate, 10);
+  });
+
+  it('splits fuels when the base DGs burn HFO and the extra one MGO', () => {
+    // 30 MW > 2 × 16800 × 0.8 = 26.88 MW → +1 MGO. 10 MW per engine, same
+    // SFOC per kW regardless of fuel → HFO share is exactly 2× the MGO share.
+    const r = computeStbyConsumption(30000, 2, 'HFO', 2);
+    expect(r.extraMgoEngines).toBe(1);
+    expect(r.perFuel.hfo).toBeCloseTo(2 * r.perFuel.mgo, 10);
+    expect(r.perFuel.lsfo).toBe(0);
+    expect(r.insufficient).toBe(false);
+  });
+
+  it('stops at the 4 installed DGs and flags insufficiency beyond them', () => {
+    // 60 MW > 4 × 16800 × 0.7 = 47.04 MW even with both extra MGO engines.
+    const r = computeStbyConsumption(60000, 2, 'MGO', 2);
+    expect(r.extraMgoEngines).toBe(2);
+    expect(r.insufficient).toBe(true);
   });
 });
