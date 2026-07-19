@@ -2,13 +2,13 @@
 export function MathExplainer() {
   return (
     <div className="rounded-xl border border-line bg-surface px-[1.1rem] py-4">
-      <div className="mb-2.5 text-[0.6rem] font-bold uppercase tracking-[1.2px] text-muted">
+      <h2 className="mb-2.5 text-[0.6rem] font-bold uppercase tracking-[1.2px] text-muted">
         How the math works
-      </div>
+      </h2>
       <div className="space-y-2 text-[0.72rem] leading-[1.55] text-muted">
         <p>
           Each port leg solves over its passage <b className="text-ink">Distance</b> against the
-          time since the previous port's <b className="text-ink">FAW</b> (Full Away). Timestamps
+          time since the previous port’s <b className="text-ink">FAW</b> (Full Away). Timestamps
           convert to UTC via the <b className="text-indigo">UTC ±</b> offset, so timezone changes
           are exact.
         </p>

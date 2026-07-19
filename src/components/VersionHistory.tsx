@@ -12,9 +12,9 @@ export function VersionHistory({ versions }: { versions: Version[] }) {
   return (
     <div className="overflow-hidden rounded-xl border border-line bg-surface">
       <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
-        <span className="text-[0.6rem] font-bold uppercase tracking-[1.2px] text-muted">
+        <h2 className="text-[0.6rem] font-bold uppercase tracking-[1.2px] text-muted">
           Version History
-        </span>
+        </h2>
         <span className="font-mono text-[0.62rem] text-faint">{versions.length} entries</span>
       </div>
       <div>
@@ -31,7 +31,7 @@ export function VersionHistory({ versions }: { versions: Version[] }) {
               >
                 {ver.tag}
               </span>
-              <div>
+              <div className="min-w-0 break-words">
                 <div className="text-[0.74rem] font-bold">
                   {ver.action}
                   <span className="font-normal text-muted"> · {ver.by}</span>

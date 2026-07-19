@@ -24,7 +24,7 @@ export function FolderGate({
             <FolderIcon size={16} />
           </span>
           <div>
-            <div className="text-[0.95rem] font-extrabold leading-tight tracking-tight">Choose your templates folder</div>
+            <h1 className="text-[0.95rem] font-extrabold leading-tight tracking-tight">Choose your templates folder</h1>
             <div className="font-mono text-[0.6rem] uppercase tracking-[1px] text-faint">{userLabel}</div>
           </div>
         </div>

@@ -58,6 +58,16 @@ function Workspace({
     return () => window.removeEventListener('keydown', onKey);
   }, [editable, undo, redo]);
 
+  // Warn before the tab closes with edits still queued for the debounced
+  // write-back — beforeunload only fires while a save is pending.
+  const { pendingSave } = w;
+  useEffect(() => {
+    if (!pendingSave) return;
+    const onBeforeUnload = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+  }, [pendingSave]);
+
   // Resizable sidebar (drag the divider). Width persists across sessions.
   const [sidebarW, setSidebarW] = useState<number>(() => {
     const v = Number(localStorage.getItem('vst_sidebar_w'));
@@ -223,11 +233,15 @@ function Workspace({
                 >
                   Fuel Consumption
                   {w.consumptionStale && (
-                    <span
-                      className="ml-1.5 inline-block h-1.5 w-1.5 rounded-full align-middle"
-                      style={{ background: 'var(--color-amber-btn)' }}
-                      title="Data changed since the last calculation"
-                    />
+                    <>
+                      <span
+                        aria-hidden="true"
+                        className="ml-1.5 inline-block h-1.5 w-1.5 rounded-full align-middle"
+                        style={{ background: 'var(--color-amber-btn)' }}
+                        title="Data changed since the last calculation"
+                      />
+                      <span className="sr-only">Data changed</span>
+                    </>
                   )}
                 </button>
               </div>
@@ -283,7 +297,7 @@ function Workspace({
               {w.files.length === 0 && w.canEdit && (
                 <button
                   onClick={() => (w.editAuthorized ? w.createFile() : w.toggleLock())}
-                  className="mt-1 inline-flex items-center gap-1.5 rounded-lg bg-cyan px-4 py-2 text-[0.8rem] font-semibold text-white shadow-[0_1px_2px_rgba(6,182,212,0.25)] transition hover:brightness-105"
+                  className="mt-1 inline-flex items-center gap-1.5 rounded-lg bg-cyan px-4 py-2 text-[0.8rem] font-semibold text-white shadow-[0_1px_2px_rgba(6,182,212,0.25)] transition-[filter] hover:brightness-105"
                 >
                   New .json file
                 </button>

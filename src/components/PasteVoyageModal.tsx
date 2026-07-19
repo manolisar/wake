@@ -44,9 +44,9 @@ export function PasteVoyageModal({ targetFile, name, startDate, onName, onDate, 
           <span className="inline-flex h-[30px] w-[30px] items-center justify-center rounded-[9px] border border-cyan/40 bg-[rgba(6,182,212,0.1)] text-cyan-deep">
             <PasteIcon size={15} />
           </span>
-          <div>
-            <div id="vst-paste-title" className="text-[0.9rem] font-extrabold">Paste voyage</div>
-            <div className="text-[0.66rem] text-muted">
+          <div className="min-w-0">
+            <h2 id="vst-paste-title" className="text-[0.9rem] font-extrabold">Paste voyage</h2>
+            <div className="truncate text-[0.66rem] text-muted" title={targetFile}>
               into <span className="font-mono">{targetFile}</span>
             </div>
           </div>
@@ -57,6 +57,8 @@ export function PasteVoyageModal({ targetFile, name, startDate, onName, onDate, 
           </label>
           <input
             id="vst-paste-name"
+            name="voyageName"
+            autoComplete="off"
             autoFocus
             value={name}
             onChange={(e) => onName(e.target.value)}
@@ -68,6 +70,8 @@ export function PasteVoyageModal({ targetFile, name, startDate, onName, onDate, 
           </label>
           <input
             id="vst-paste-date"
+            name="startDate"
+            autoComplete="off"
             type="date"
             value={startDate}
             onChange={(e) => onDate(e.target.value)}

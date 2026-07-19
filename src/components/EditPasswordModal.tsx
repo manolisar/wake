@@ -52,7 +52,7 @@ export function EditPasswordModal({ loggedBy, onConfirm, onCancel }: Props) {
             <LockIcon size={15} />
           </span>
           <div>
-            <div id="vst-edit-title" className="text-[0.9rem] font-extrabold">Enable editing</div>
+            <h2 id="vst-edit-title" className="text-[0.9rem] font-extrabold">Enable editing</h2>
             <div className="text-[0.66rem] text-muted">Logged as {loggedBy}</div>
           </div>
         </div>

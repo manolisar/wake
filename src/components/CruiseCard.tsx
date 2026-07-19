@@ -40,6 +40,7 @@ export function CruiseCard({
                 value={voyage.number}
                 onChange={(e) => onNumber(e.target.value)}
                 aria-label="Voyage number"
+                autoComplete="off"
                 spellCheck={false}
                 inputMode="numeric"
                 maxLength={3}
@@ -51,20 +52,21 @@ export function CruiseCard({
                 value={voyage.title}
                 onChange={(e) => onTitle(e.target.value)}
                 aria-label="Cruise name"
+                autoComplete="off"
                 spellCheck={false}
                 placeholder="e.g. British Isles & Ireland"
                 className="w-full max-w-[24rem] rounded-md border border-transparent bg-transparent px-1.5 py-0.5 text-[1.25rem] font-extrabold leading-tight tracking-[-0.3px] text-ink outline-none transition-colors placeholder:font-bold placeholder:text-faint hover:bg-rail focus:border-cyan focus:bg-surface"
               />
             </div>
           ) : (
-            <div
-              className="px-1.5 py-0.5 text-[1.25rem] font-extrabold leading-tight tracking-[-0.3px]"
+            <h2
+              className="break-words px-1.5 py-0.5 text-[1.25rem] font-extrabold leading-tight tracking-[-0.3px]"
               style={{ color: voyage.title || voyage.number ? 'var(--color-ink)' : 'var(--color-faint)', fontStyle: voyage.title || voyage.number ? 'normal' : 'italic' }}
             >
               {voyage.number && <span className="font-mono text-cyan-deep [font-variant-numeric:tabular-nums]">{voyage.number}</span>}
               {voyage.number && (voyage.title ? ' — ' : '')}
               {voyage.title || (voyage.number ? '' : 'Untitled cruise')}
-            </div>
+            </h2>
           )}
           <div className="mt-1.5 px-1.5 text-[0.7rem] tracking-[0.3px] text-muted">
             {dates} · {voyage.loggedBy} · <span className="font-mono">{fileName}</span>
@@ -83,9 +85,9 @@ export function CruiseCard({
       </div>
       <div className="mt-3.5 flex flex-wrap items-center gap-2 font-mono text-[0.82rem]">
         {portLegs.map((l, i) => (
-          <span key={i} className="flex items-center gap-2">
+          <span key={i} className="flex min-w-0 items-center gap-2">
             {i > 0 && <span className="text-faint">→</span>}
-            <span className="font-bold">{(l.port || '—').split(',')[0]}</span>
+            <span className="max-w-[16rem] truncate font-bold" title={(l.port || '—').split(',')[0]}>{(l.port || '—').split(',')[0]}</span>
           </span>
         ))}
         <span className="ml-auto font-sans text-[0.68rem] uppercase tracking-[0.5px] text-muted">

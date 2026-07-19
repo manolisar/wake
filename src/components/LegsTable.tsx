@@ -200,18 +200,24 @@ export function LegsTable(props: Props) {
             Legs · {legs.length} stops
           </span>
           <span className="inline-flex items-center gap-1.5 font-mono text-[0.58rem] text-muted">
-            <span className="inline-block h-[9px] w-[9px] rounded-sm" style={{ background: 'var(--color-spd-hi-fg)' }} />&gt;19 kn
+            <span aria-hidden="true" className="inline-block h-[9px] w-[9px] rounded-sm" style={{ background: 'var(--color-spd-hi-fg)' }} />&gt;19 kn
           </span>
           <span className="inline-flex items-center gap-1.5 font-mono text-[0.58rem] text-muted">
-            <span className="inline-block h-[9px] w-[9px] rounded-sm" style={{ background: 'var(--color-spd-lo-fg)' }} />&lt;10 kn
+            <span aria-hidden="true" className="inline-block h-[9px] w-[9px] rounded-sm" style={{ background: 'var(--color-spd-lo-fg)' }} />&lt;10 kn
           </span>
         </div>
         <div className="flex items-center gap-1.5">
           {/* Columns popover */}
-          <div className="relative">
+          <div
+            className="relative"
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') setColsOpen(false);
+            }}
+          >
             <button
               type="button"
               onClick={() => setColsOpen((o) => !o)}
+              aria-haspopup="true"
               aria-expanded={colsOpen}
               className="rounded-lg border border-line bg-surface px-2.5 py-1.5 text-[0.66rem] font-semibold text-muted hover:bg-rail"
             >
@@ -219,7 +225,7 @@ export function LegsTable(props: Props) {
             </button>
             {colsOpen && (
               <>
-                <div className="fixed inset-0 z-40" onClick={() => setColsOpen(false)} aria-hidden="true" />
+                <button type="button" aria-label="Close" className="fixed inset-0 z-40 cursor-default" onClick={() => setColsOpen(false)} />
                 <div className="absolute right-0 z-50 mt-1 w-44 rounded-lg border border-line bg-surface p-1.5 shadow-[0_8px_24px_rgba(15,23,42,0.18)]">
                   {([['standby', 'St/By columns'], ['sun', 'Sunrise / Sunset'], ['loop', 'Open Loop / Sea']] as const).map(([key, label]) => (
                     <label key={key} className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-[0.72rem] text-ink hover:bg-rail">

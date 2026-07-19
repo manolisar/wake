@@ -69,7 +69,7 @@ function DgBreakdown({ result, title }: { result: CalculationResult; title: stri
       <div className="mb-1 font-mono text-[0.55rem] font-bold uppercase tracking-[1px] text-faint">
         {title} · {(result.totalPowerKW / 1000).toFixed(1)} MW total
       </div>
-      <table className="w-full">
+      <table className="w-full" aria-label={`${title} diesel generator breakdown`}>
         <tbody>
           {result.engineResults.map((e) => (
             <tr key={e.id} className="border-t border-line/60">
@@ -143,6 +143,7 @@ function StbyRow({
             ovr
             <input
               type="number"
+              autoComplete="off"
               aria-label={`${label} power override, MW`}
               className="w-[52px] rounded border border-line bg-surface px-1 py-[1px] font-mono text-[0.62rem] outline-none focus:border-cyan"
               placeholder="MW"
@@ -218,9 +219,9 @@ export function ConsumptionReport({
           MT
         </span>
         <div className="flex-1">
-          <div id="vst-report-title" className="text-[0.9rem] font-extrabold">
+          <h2 id="vst-report-title" className="text-[0.9rem] font-extrabold">
             Consumption Report — {voyage.number} · {voyage.title}
-          </div>
+          </h2>
           <div className="text-[0.66rem] text-muted">
             Calculated {new Date(consumption.computedAt).toLocaleString()} by {consumption.by || '—'}
             {transient && ' · view-only (not saved)'}
@@ -239,7 +240,7 @@ export function ConsumptionReport({
 
       {/* Stale banner */}
       {stale && (
-        <div className="flex items-center gap-3 border-b border-warn-border bg-warn-bg px-5 py-2.5">
+        <div aria-live="polite" className="flex items-center gap-3 border-b border-warn-border bg-warn-bg px-5 py-2.5">
           <span className="text-[0.72rem] font-semibold text-amber">
             Voyage data or parameters changed since this calculation — figures below may be outdated.
           </span>
@@ -426,7 +427,7 @@ export function ConsumptionReport({
 
         {/* Warnings */}
         {consumption.warnings.length > 0 && (
-          <div className="mt-3 rounded-lg border border-warn-border bg-warn-bg px-3.5 py-2.5">
+          <div role="status" className="mt-3 rounded-lg border border-warn-border bg-warn-bg px-3.5 py-2.5">
             <div className="mb-1 font-mono text-[0.55rem] font-bold uppercase tracking-[1.2px] text-amber">
               Warnings
             </div>

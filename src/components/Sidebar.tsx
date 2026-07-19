@@ -94,7 +94,7 @@ export function Sidebar({
           value={search}
           onChange={(e) => onSearch(e.target.value)}
           placeholder="Search cruises, ports…"
-          className="w-full rounded-lg border border-line bg-bg py-2 pl-8 pr-2.5 text-[0.78rem] text-ink outline-none transition-colors focus:border-cyan focus:bg-surface"
+          className="w-full rounded-lg border border-line bg-bg py-2 pl-8 pr-2.5 text-[0.78rem] text-ink transition-colors focus:border-cyan focus:bg-surface"
         />
       </div>
 
@@ -106,14 +106,14 @@ export function Sidebar({
               onClick={onAddTemplate}
               disabled={!selectedFile}
               title={selectedFile ? `Add a template to ${selectedFile}` : 'Select a file first'}
-              className="vt-unbutton inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-cyan px-3 py-2 text-[0.8rem] font-semibold text-white shadow-[0_1px_2px_rgba(6,182,212,0.25)] transition hover:brightness-105 disabled:opacity-40 disabled:shadow-none"
+              className="vt-unbutton inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-cyan px-3 py-2 text-[0.8rem] font-semibold text-white shadow-[0_1px_2px_rgba(6,182,212,0.25)] transition-[filter] hover:brightness-105 disabled:opacity-40 disabled:shadow-none"
             >
               <PlusIcon size={14} /> Add Template
             </button>
             <button
               onClick={onNewFile}
               title="Create a new .json file in the folder"
-              className="vt-unbutton inline-flex items-center justify-center gap-1.5 rounded-lg border border-line bg-surface px-3 py-2 text-[0.8rem] font-semibold text-ink transition hover:border-cyan/40 hover:bg-rail"
+              className="vt-unbutton inline-flex items-center justify-center gap-1.5 rounded-lg border border-line bg-surface px-3 py-2 text-[0.8rem] font-semibold text-ink transition-colors hover:border-cyan/40 hover:bg-rail"
             >
               <FilePlusIcon size={14} /> New .json
             </button>

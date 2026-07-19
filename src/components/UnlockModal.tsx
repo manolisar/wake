@@ -35,7 +35,7 @@ export function UnlockModal({ loggedBy, note, onNote, onConfirm, onCancel }: Pro
             <LockOpenIcon size={15} />
           </span>
           <div>
-            <div id="vst-unlock-title" className="text-[0.9rem] font-extrabold">Unlock voyage for editing</div>
+            <h2 id="vst-unlock-title" className="text-[0.9rem] font-extrabold">Unlock voyage for editing</h2>
             <div className="text-[0.66rem] text-muted">Logged as {loggedBy}</div>
           </div>
         </div>
@@ -45,10 +45,12 @@ export function UnlockModal({ loggedBy, note, onNote, onConfirm, onCancel }: Pro
           </label>
           <textarea
             id="vst-unlock-note"
+            name="unlockNote"
+            autoComplete="off"
             autoFocus
             value={note}
             onChange={(e) => onNote(e.target.value)}
-            placeholder="e.g. Revised ETA Willemstad after weather routing"
+            placeholder="e.g. Revised ETA Willemstad after weather routing…"
             className="min-h-[70px] w-full resize-y rounded-lg border border-line px-2.5 py-2 text-[0.78rem] text-ink outline-none focus:border-cyan"
           />
         </div>

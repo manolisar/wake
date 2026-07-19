@@ -17,7 +17,7 @@ interface CardDef {
 function cards(s: Summary): CardDef[] {
   return [
     { label: 'Port Calls', unit: '', value: String(s.portCalls || 0), sub: 'stops', color: '#10b981' },
-    { label: 'Total Distance', unit: 'nm', value: s.totalDist != null ? Math.round(s.totalDist).toLocaleString('en-GB') : '0', sub: '', color: '#6b8cae' },
+    { label: 'Total Distance', unit: 'nm', value: s.totalDist != null ? Math.round(s.totalDist).toLocaleString() : '0', sub: '', color: '#6b8cae' },
     { label: 'Average Speed', unit: 'kn', value: s.avg != null ? s.avg.toFixed(1) : '—', sub: 'passages', color: '#06b6d4' },
     { label: 'Steaming Time', unit: 'HH:MM', value: fmtHM((s.totalHrs || 0) * 60), sub: s.totalHrs ? '(' + (s.totalHrs / 24).toFixed(1) + ' d)' : '', color: '#f97316' },
     { label: 'St/By Time', unit: 'HH:MM', value: fmtHM(s.stbyMin || 0), sub: 'maneuvering', color: '#f59e0b' },

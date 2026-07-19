@@ -42,9 +42,9 @@ export function ConfirmModal({ title, body, confirmLabel, onConfirm, onCancel }:
           >
             <TrashIcon size={14} />
           </span>
-          <div id="vst-confirm-title" className="text-[0.9rem] font-extrabold">
+          <h2 id="vst-confirm-title" className="text-[0.9rem] font-extrabold">
             {title}
-          </div>
+          </h2>
         </div>
         <div id="vst-confirm-body" className="px-5 py-[1.1rem] text-[0.78rem] leading-relaxed text-muted">
           {body}

@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import type { Leg, LegType } from '../types';
 import type { LegView, SpeedBand } from '../domain/calculations';
 import { FIELD_COL, FIELD_SPEC, FROZEN, isInvalid } from '../domain/fieldTypes';
+import { ConfirmModal } from './ConfirmModal';
 
 const TYPE_CHIP: Record<LegType, { label: string; bg: string; fg: string; bd: string; row: string; solid: string }> = {
   Port: { label: 'PORT', bg: '#EFF6FF', fg: '#2563EB', bd: '#BFDBFE', row: 'var(--color-surface)', solid: 'var(--color-surface)' },
@@ -95,6 +96,9 @@ function LegRowImpl({
 }: Props) {
   const chip = TYPE_CHIP[leg.type];
   const set = (field: keyof Leg) => (e: ChangeEvent<HTMLInputElement>) => onField(index, field, e.target.value);
+  // Delete goes through a confirmation (writes straight back to the file on
+  // disk) — the modal is portalled because a row can't render a fixed overlay.
+  const [confirmDel, setConfirmDel] = useState(false);
   // Value captured when an input gains focus — used to revert on Escape and to
   // skip the blur-normalise when an Escape revert is in flight.
   const focusValRef = useRef('');
@@ -201,6 +205,7 @@ function LegRowImpl({
           onKeyDown={onKeyDown}
           readOnly={readonly}
           data-col={col}
+          autoComplete="off"
           aria-label={`${FIELD_LABEL[field] ?? field}, leg ${index + 1}`}
           aria-invalid={invalid || undefined}
           inputMode={spec.inputMode}
@@ -217,18 +222,27 @@ function LegRowImpl({
             ...(inFill ? { background: 'color-mix(in srgb, var(--color-cyan) 16%, var(--color-surface))' } : null),
             ...(invalid ? { boxShadow: 'inset 0 -2px 0 0 var(--color-spd-hi-fg)' } : null),
           }}
-          className={`w-full min-w-0 rounded border border-transparent bg-transparent px-1 py-[3px] text-[0.72rem] outline-none focus:border-cyan focus:bg-surface hover:bg-rail ${
+          className={`w-full min-w-0 rounded border border-transparent bg-transparent px-1 py-[3px] text-[0.72rem] focus:border-cyan focus:bg-surface hover:bg-rail ${
             spec.mono ? 'font-mono' : ''
           }`}
         />
         {!readonly && (
-          <span
-            role="button"
+          <button
+            type="button"
+            // Kept out of the tab order: the grid's Tab navigation steps through
+            // the cell inputs only (see LegsTable.onGridKey). Keyboard users get
+            // Enter/Space = fill one row down; pointer users drag for a range.
             tabIndex={-1}
-            aria-label={`Fill ${FIELD_LABEL[field] ?? field} down from leg ${index + 1}`}
-            title="Drag down to fill the cells below"
+            aria-label={`Fill ${FIELD_LABEL[field] ?? field} down from leg ${index + 1}. Press Enter to fill one row, or drag for a range`}
+            title="Drag down to fill the cells below (or focus + Enter to fill one row)"
             onPointerDown={(e) => startFill(e, field)}
-            className="vt-fill-handle absolute bottom-[2px] right-[2px] h-[7px] w-[7px] cursor-crosshair rounded-[2px] border border-surface bg-cyan shadow-[0_0_0_1px_rgba(0,0,0,0.08)]"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onFillCommit(index, index + 1, field);
+              }
+            }}
+            className="vt-unbutton vt-fill-handle absolute bottom-[2px] right-[2px] h-[7px] w-[7px] cursor-crosshair rounded-[2px] border border-surface bg-cyan shadow-[0_0_0_1px_rgba(0,0,0,0.08)]"
           />
         )}
       </span>
@@ -254,7 +268,9 @@ function LegRowImpl({
           onClick={() => onToggleType(index)}
           disabled={readonly}
           aria-label={`Leg ${index + 1} type: ${chip.label}. Change type`}
-          className="vt-unbutton rounded-[5px] border px-[7px] py-0.5 font-mono text-[0.58rem] font-extrabold tracking-[0.5px]"
+          className={`vt-unbutton rounded-[5px] border px-[7px] py-0.5 font-mono text-[0.58rem] font-extrabold tracking-[0.5px] ${
+            readonly ? '' : 'transition-[filter] hover:brightness-90'
+          }`}
           style={{
             background: 'transparent',
             color: chip.fg,
@@ -331,12 +347,13 @@ function LegRowImpl({
             onChange={set('speed')}
             readOnly={readonly}
             data-col={FIELD_COL.speed}
+            autoComplete="off"
             aria-label={`Target speed in knots, leg ${index + 1}`}
             inputMode="decimal"
             spellCheck={false}
             placeholder="kn"
             style={{ background: 'color-mix(in srgb, var(--color-cyan) 10%, var(--color-surface))' }}
-            className="w-full min-w-0 rounded border border-cyan px-1 py-[3px] text-right font-mono text-[0.72rem] font-bold outline-none focus:bg-surface"
+            className="w-full min-w-0 rounded border border-cyan px-1 py-[3px] text-right font-mono text-[0.72rem] font-bold focus:bg-surface"
           />
         ) : null}
       </td>
@@ -431,8 +448,22 @@ function LegRowImpl({
           <ActionBtn label={`Move leg ${index + 1} up`} hoverClass="hover:text-cyan-deep" disabled={readonly} onClick={() => onUp(index)}>↑</ActionBtn>
           <ActionBtn label={`Move leg ${index + 1} down`} hoverClass="hover:text-cyan-deep" disabled={readonly} onClick={() => onDown(index)}>↓</ActionBtn>
           <ActionBtn label={`Insert leg below leg ${index + 1}`} hoverClass="hover:text-green" disabled={readonly} onClick={() => onInsert(index)}>＋</ActionBtn>
-          <ActionBtn label={`Delete leg ${index + 1}`} hoverClass="hover:text-[#DC2626]" disabled={readonly} onClick={() => onDelete(index)}>✕</ActionBtn>
+          <ActionBtn label={`Delete leg ${index + 1}`} hoverClass="hover:text-[#DC2626]" disabled={readonly} onClick={() => setConfirmDel(true)}>✕</ActionBtn>
         </span>
+        {confirmDel &&
+          createPortal(
+            <ConfirmModal
+              title="Delete leg"
+              body={`Delete leg ${index + 1}${leg.port ? ` (${leg.port})` : ''}? The file on disk is updated immediately.`}
+              confirmLabel="Delete Leg"
+              onConfirm={() => {
+                onDelete(index);
+                setConfirmDel(false);
+              }}
+              onCancel={() => setConfirmDel(false)}
+            />,
+            document.body,
+          )}
       </td>
     </tr>
   );
@@ -540,10 +571,11 @@ function RemarksCell({
         onChange={(e) => onChange(e.target.value)}
         readOnly={readonly}
         data-col={FIELD_COL.remarks}
+        autoComplete="off"
         aria-label={`Remarks, leg ${index + 1}`}
         spellCheck={false}
         placeholder="—"
-        className="min-w-0 flex-1 rounded border border-transparent bg-transparent px-1 py-[3px] text-[0.72rem] text-muted outline-none focus:border-cyan focus:bg-surface hover:bg-rail"
+        className="min-w-0 flex-1 rounded border border-transparent bg-transparent px-1 py-[3px] text-[0.72rem] text-muted focus:border-cyan focus:bg-surface hover:bg-rail"
       />
       <button
         ref={btnRef}
@@ -562,7 +594,7 @@ function RemarksCell({
         pos &&
         createPortal(
           <>
-            <div className="fixed inset-0 z-[100]" onClick={() => setOpen(false)} aria-hidden="true" />
+            <button type="button" aria-label="Close remarks" className="fixed inset-0 z-[100] cursor-default" onClick={() => setOpen(false)} />
             <div
               className="fixed z-[101] rounded-lg border border-line bg-surface p-2 shadow-[0_8px_24px_rgba(15,23,42,0.18)]"
               style={{ left: pos.left, top: pos.top, width: PANEL_W }}
@@ -576,7 +608,7 @@ function RemarksCell({
                 spellCheck={false}
                 placeholder="Remarks…"
                 aria-label={`Full remarks for leg ${index + 1}`}
-                className="w-full resize-y whitespace-pre-wrap break-words rounded border border-line bg-bg px-2 py-1.5 text-[0.74rem] leading-relaxed text-ink outline-none focus:border-cyan"
+                className="w-full resize-y whitespace-pre-wrap break-words rounded border border-line bg-bg px-2 py-1.5 text-[0.74rem] leading-relaxed text-ink focus:border-cyan"
               />
             </div>
           </>,

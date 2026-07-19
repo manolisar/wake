@@ -46,8 +46,8 @@ const SCALARS: { key: ScalarKey; label: string; unit: string; step: number; hint
   { key: 'seaMargin', label: 'Sea margin', unit: '%', step: 1, hint: 'Weather / hull degradation' },
   { key: 'sfocDet', label: 'SFOC deterioration', unit: '%', step: 0.5, hint: 'Engine wear vs FAT curve' },
   { key: 'propAux', label: 'Prop auxiliaries', unit: 'kW', step: 100, hint: 'Steering, ventilation — at sea & St/By' },
-  { key: 'thrusterIdleKW', label: 'Thrusters idle', unit: 'kW', step: 100, hint: 'St/By except final 30 min (3×360 kW)' },
-  { key: 'thrusterHighKW', label: 'Thrusters high', unit: 'kW', step: 500, hint: 'Final 30 min of St/By (3×3,000 kW)' },
+  { key: 'thrusterIdleKW', label: 'Thrusters idle', unit: 'kW', step: 100, hint: 'St/By except final 30 min (3×360 kW)' },
+  { key: 'thrusterHighKW', label: 'Thrusters high', unit: 'kW', step: 500, hint: 'Final 30 min of St/By (3×3,000 kW)' },
   { key: 'portBoilerRate', label: 'Port boiler', unit: 't/h', step: 0.01, hint: 'MGO while alongside' },
   { key: 'seaBoilerRate', label: 'Sea boiler', unit: 't/h', step: 0.01, hint: 'MGO per sea hour' },
 ];
@@ -183,20 +183,21 @@ export function ConsumptionSettingsModal({
             t/h
           </span>
           <div className="flex-1">
-            <div id="vst-fuel-title" className="text-[0.9rem] font-extrabold">
+            <h2 id="vst-fuel-title" className="text-[0.9rem] font-extrabold">
               Fuel Setup — SL consumption model
-            </div>
-            <div className="text-[0.66rem] text-muted">
+            </h2>
+            <div className="text-[0.66rem] text-muted" translate="no">
               4 × Wärtsilä 16V46 · DG3 MGO-locked · DG4 open-loop scrubber
             </div>
           </div>
           <div className="flex gap-1.5">
-            <button type="button" className={tabBtn(onDefaults)} onClick={() => setTab('defaults')}>
+            <button type="button" className={tabBtn(onDefaults)} aria-pressed={onDefaults} onClick={() => setTab('defaults')}>
               Ship defaults
             </button>
             <button
               type="button"
               className={tabBtn(!onDefaults)}
+              aria-pressed={!onDefaults}
               onClick={() => setTab('voyage')}
               disabled={!hasVoyage}
               title={hasVoyage ? undefined : 'Select a voyage first'}
@@ -226,6 +227,7 @@ export function ConsumptionSettingsModal({
                   <input
                     id={`fuel-${key}`}
                     type="number"
+                    autoComplete="off"
                     className={input}
                     value={view[key]}
                     min={scalarRange[key].min}
@@ -318,6 +320,7 @@ export function ConsumptionSettingsModal({
                   </label>
                   <input
                     id="fuel-port-count"
+                    autoComplete="off"
                     type="number"
                     className={input}
                     min={R.engineCount.min}
@@ -347,6 +350,7 @@ export function ConsumptionSettingsModal({
                   </label>
                   <input
                     id="fuel-tender-kw"
+                    autoComplete="off"
                     type="number"
                     className={input}
                     min={R.tenderPowerKW.min}
@@ -363,6 +367,7 @@ export function ConsumptionSettingsModal({
                   </label>
                   <input
                     id="fuel-tender-count"
+                    autoComplete="off"
                     type="number"
                     className={input}
                     min={R.engineCount.min}
@@ -393,6 +398,7 @@ export function ConsumptionSettingsModal({
                   </label>
                   <input
                     id="fuel-stby-mw"
+                    autoComplete="off"
                     type="number"
                     className={input}
                     min={R.avgPowerMW.min}
@@ -409,6 +415,7 @@ export function ConsumptionSettingsModal({
                   </label>
                   <input
                     id="fuel-stby-count"
+                    autoComplete="off"
                     type="number"
                     className={input}
                     min={R.engineCount.min}

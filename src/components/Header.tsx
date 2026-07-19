@@ -128,10 +128,11 @@ export function Header({
             aria-expanded={themeMenu}
             title="Themes"
           >
-            <PaletteIcon size={14} /> Themes <span className="text-[0.6rem] opacity-45">{themeMenu ? '▴' : '▾'}</span>
+            <PaletteIcon size={14} /> Themes <span aria-hidden="true" className="text-[0.6rem] opacity-45">{themeMenu ? '▴' : '▾'}</span>
           </button>
           {themeMenu && (
-            <div className="fixed inset-0 z-40" onClick={() => setThemeMenu(false)}>
+            <>
+              <button type="button" aria-label="Close menu" className="fixed inset-0 z-40 cursor-default" onClick={() => setThemeMenu(false)} />
               <div
                 ref={themeMenuRef}
                 role="menu"
@@ -141,7 +142,7 @@ export function Header({
                   if (e.key === 'Escape') setThemeMenu(false);
                   else menuArrowNav(e);
                 }}
-                className="vt-scale-in absolute right-0 top-[42px] min-w-[208px] overflow-hidden rounded-[10px] border border-line bg-surface p-1.5 shadow-[0_10px_40px_rgba(0,0,0,0.15)]"
+                className="vt-scale-in fixed right-0 top-[42px] z-50 min-w-[208px] overflow-hidden rounded-[10px] border border-line bg-surface p-1.5 shadow-[0_10px_40px_rgba(0,0,0,0.15)]"
               >
                 {THEMES.map((t) => {
                   const active = t.value === theme;
@@ -168,7 +169,7 @@ export function Header({
                   );
                 })}
               </div>
-            </div>
+            </>
           )}
         </div>
         <button onClick={onSignOut} className={iconBtn} title="Sign out">
@@ -236,10 +237,11 @@ export function Header({
 
       <div className="relative">
         <button onClick={onToggleExportMenu} className={iconBtn} aria-haspopup="menu" aria-expanded={exportMenu} disabled={!fileName}>
-          <DownloadIcon size={13} /> Export <span className="text-[0.6rem] opacity-45">{exportMenu ? '▴' : '▾'}</span>
+          <DownloadIcon size={13} /> Export <span aria-hidden="true" className="text-[0.6rem] opacity-45">{exportMenu ? '▴' : '▾'}</span>
         </button>
         {exportMenu && (
-          <div className="fixed inset-0 z-40" onClick={onCloseExportMenu}>
+          <>
+            <button type="button" aria-label="Close menu" className="fixed inset-0 z-40 cursor-default" onClick={onCloseExportMenu} />
             <div
               ref={menuRef}
               role="menu"
@@ -249,7 +251,7 @@ export function Header({
                 if (e.key === 'Escape') onCloseExportMenu();
                 else menuArrowNav(e);
               }}
-              className="vt-scale-in absolute right-4 top-[58px] min-w-[218px] overflow-hidden rounded-[10px] border border-line bg-surface p-1.5 shadow-[0_10px_40px_rgba(0,0,0,0.15)]"
+              className="vt-scale-in fixed right-4 top-[58px] z-50 min-w-[218px] overflow-hidden rounded-[10px] border border-line bg-surface p-1.5 shadow-[0_10px_40px_rgba(0,0,0,0.15)]"
             >
               <div className="px-2 pb-1 pt-1.5 text-[0.6rem] font-bold uppercase tracking-[1.2px] text-faint">
                 Excel · template format
@@ -278,7 +280,7 @@ export function Header({
                 <span className="ml-auto font-mono text-[0.6rem] text-faint">{voyageTotal}</span>
               </button>
             </div>
-          </div>
+          </>
         )}
       </div>
 
