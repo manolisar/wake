@@ -119,7 +119,7 @@ modules; do not pretend the current gates are ones.
   dense table.
 - **Contrast is axe-verified (0 violations, WCAG AA).** Text colors must come from the theme tokens
   (`text-muted`, `text-faint`, `var(--color-*)`), never from raw hex or `opacity-*` dimming — the
-  tokens carry per-theme overrides (default / admiralty / console) tuned to ≥ 4.5:1 on their own
+  tokens carry per-theme overrides (Harbor [default] / admiralty / console) tuned to ≥ 4.5:1 on their own
   surfaces. Text on tinted chips mixes ink in (`color-mix(in srgb, <tint> 40%, var(--color-ink))`).
 - Content comes from the chosen **folder** of `.json` files (§1) — one tree of files → voyages. Ships
   (`domain/ships.ts`) survive only as a `shipId` tag per file + for Excel naming. Crews add voyages

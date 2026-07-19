@@ -6,7 +6,7 @@ import { useCallback, useEffect, useState } from 'react';
 export type Theme = 'default' | 'admiralty' | 'console';
 
 export const THEMES: { value: Theme; label: string; hint: string }[] = [
-  { value: 'default', label: 'Default', hint: 'Light · cyan & navy' },
+  { value: 'default', label: 'Harbor', hint: 'Sea-mist light · navy ink' },
   { value: 'admiralty', label: 'Admiralty Chart', hint: 'Warm parchment & ink' },
   { value: 'console', label: 'Bridge Console', hint: 'Dark navy & phosphor' },
 ];

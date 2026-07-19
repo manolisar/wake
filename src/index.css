@@ -8,20 +8,23 @@
   --font-sans: 'Manrope', system-ui, sans-serif;
   --font-mono: 'IBM Plex Mono', monospace;
 
-  --color-bg: #fafbfd;
-  --color-surface: #ffffff;
-  --color-rail: #f3f5f9;
-  --color-ink: #1a2233;
+  /* Harbor — sea-mist light theme: cool blue-grey surfaces, sea-navy ink.
+     A half-step darker than plain white (less glare) while keeping every
+     accent token's AA contrast — verified by the axe audit. */
+  --color-bg: #eef3f6;
+  --color-surface: #f7fafb;
+  --color-rail: #e2ebf0;
+  --color-ink: #1c2b36;
   /* muted/faint darkened for WCAG AA (≥4.5:1) on bg/surface/rail — see the
      2026-07-19 axe contrast audit. faint stays a touch darker than muted. */
-  --color-muted: #5c6b7d;
-  --color-faint: #66707f;
-  --color-line: #e5e9f0;
+  --color-muted: #54656f;
+  --color-faint: #5b6a75;
+  --color-line: #ccd9e0;
 
-  /* cyan (fills) darkened 06b6d4 → 0e7490 so white button text passes AA;
-     cyan-deep (computed-value text) merged onto the same AA-safe hue. */
-  --color-cyan: #0e7490;
-  --color-cyan-deep: #0e7490;
+  /* cyan (fills) darkened so white button text passes AA; cyan-deep
+     (computed-value text) merged onto the same AA-safe hue. */
+  --color-cyan: #0c6c87;
+  --color-cyan-deep: #0c6c87;
   --color-sky: #0369a1;
   --color-indigo: #4f46e5;
   --color-navy: #102a43;
@@ -30,12 +33,12 @@
   /* accent text hues, all ≥4.5:1 on the light surfaces (amber/green/indigo
      double as the HFO/MGO/LSFO fuel text colors) */
   --color-green: #047857;
-  --color-amber: #b45309;
+  --color-amber: #a34d08;
   /* filled amber button (Enable Edit, Recalculate) — white text passes AA */
-  --color-amber-btn: #b45309;
-  --color-orange: #c2410c;
+  --color-amber-btn: #a34d08;
+  --color-orange: #b33d0b;
   --color-pink: #be185d;
-  --color-blue: #2563eb;
+  --color-blue: #1d5fd9;
   /* "Active" status pill text (on its green tint) */
   --color-active-fg: #065f46;
 
@@ -52,7 +55,7 @@
   --color-warn-border: #fde68a;
 
   /* themed scrollbar thumb */
-  --color-scroll-thumb: #cfd8e3;
+  --color-scroll-thumb: #b9c8d2;
 }
 
 :root {
