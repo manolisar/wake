@@ -20,6 +20,7 @@ import { EditPasswordModal } from './components/EditPasswordModal';
 import { PasteVoyageModal } from './components/PasteVoyageModal';
 import { ConsumptionSettingsModal } from './components/ConsumptionSettingsModal';
 import { ConsumptionReport } from './components/ConsumptionReport';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { Toast } from './components/Toast';
 
 function Workspace({
@@ -57,6 +58,17 @@ function Workspace({
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [editable, undo, redo]);
+
+  // Warm the lazy Excel chunks (~1.3 MB) once the app goes idle, so the first
+  // Export/Import click doesn't stall on the download. Initial load stays lean.
+  useEffect(() => {
+    const warm = () => {
+      void import('exceljs');
+      void import('xlsx');
+    };
+    if (typeof window.requestIdleCallback === 'function') window.requestIdleCallback(warm, { timeout: 8000 });
+    else window.setTimeout(warm, 4000);
+  }, []);
 
   // Warn before the tab closes with edits still queued for the debounced
   // write-back — beforeunload only fires while a save is pending.
@@ -384,5 +396,9 @@ export default function App() {
 
   if (!session) return <LandingScreen initial={null} onDone={setSession} />;
 
-  return <SignedIn session={session} onSignOut={signOut} theme={theme} onSetTheme={setTheme} />;
+  return (
+    <ErrorBoundary>
+      <SignedIn session={session} onSignOut={signOut} theme={theme} onSetTheme={setTheme} />
+    </ErrorBoundary>
+  );
 }
