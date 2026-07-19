@@ -40,7 +40,7 @@ export const DEFAULT_CONSUMPTION_SETTINGS: ConsumptionSettings = {
   stby: { avgPowerMW: 10, engineCount: 2 },
   thrusterIdleKW: 1080, // 3 × 360 kW, CE-validated 2026-07-07
   thrusterHighKW: 9000, // 3 × 3,000 kW, final 30 min of St/By
-  portBoilerRate: 0.19, // t/h MGO, CE-validated 2026-07-07 (was 0.20)
+  portBoilerRate: 0.20, // t/h MGO, CE-validated 2026-07-19 (was 0.19)
   seaBoilerRate: 0.14, // t/h MGO, CE-validated 2026-07-07
   inPortFuel: 'MGO',
 };

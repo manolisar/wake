@@ -59,9 +59,9 @@ describe('resolveSettings', () => {
 });
 
 describe('boiler-rate settings', () => {
-  it('defaults port boiler to 0.19 and sea boiler to 0.14', () => {
+  it('defaults port boiler to 0.20 and sea boiler to 0.14', () => {
     const s = normalizeSettings({});
-    expect(s.portBoilerRate).toBeCloseTo(0.19, 10);
+    expect(s.portBoilerRate).toBeCloseTo(0.20, 10);
     expect(s.seaBoilerRate).toBeCloseTo(0.14, 10);
   });
   it('clamps boiler rates into [0, 1] and coerces per-voyage overrides', () => {

@@ -17,7 +17,7 @@
 //                 settings.stby.engineCount as the minimum-DG floor — the load
 //                 pulls in more DGs by fuel priority as needed (CE 2026-07-07).
 //   Port stay   — Arr → Dep. Hotel-load DGs + MGO boiler (settings.portBoilerRate,
-//                 default 0.19 t/h).
+//                 default 0.20 t/h).
 //                 Tender legs instead run the tender plant assumption: a
 //                 fixed total output on the tender DG count (CE 2026-07-07:
 //                 11,000 kW on 2 DGs), + the same port boiler.

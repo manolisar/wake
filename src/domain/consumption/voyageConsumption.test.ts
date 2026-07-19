@@ -78,7 +78,7 @@ describe('computeVoyageConsumption — voyage 586 fixture', () => {
       sfocDet: settings.sfocDet, minEngines: settings.port.engineCount, boilerRate: settings.portBoilerRate, hours: 9,
     });
     expect(port.totalMT).toBeCloseTo(expected.totalMT, 10);
-    expect(port.boilerMT).toBeCloseTo(0.19 * 9, 10);
+    expect(port.boilerMT).toBeCloseTo(0.20 * 9, 10);
   });
 
   it('totals.boilerMT rolls up port and sailing boilers together', () => {
@@ -129,7 +129,7 @@ describe('tender stays (Type: Tender)', () => {
     expect(settings.tender.engineCount).toBe(2);
     expect(stay.totalMT).toBeCloseTo(expected.totalMT, 10);
     expect(stay.dgRate).toBeCloseTo(expected.dgRate, 10);
-    expect(stay.boilerMT).toBeCloseTo(0.19 * 9, 10); // port boiler still applies
+    expect(stay.boilerMT).toBeCloseTo(0.20 * 9, 10); // port boiler still applies
   });
 
   it('a normal port leg is unaffected by the tender assumptions', () => {

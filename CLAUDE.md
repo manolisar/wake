@@ -167,7 +167,7 @@ The SL Class engine, ported verbatim from `~/Projects/voyage-planner` (4 × Wär
   configured `inPortFuel`, clamped to each DG's legal fuels) + the port boiler. `closeLoopEngines`
   (forces DG4 HFO→MGO) is applied by every St/By phase and by the close portion of a sea leg. Load
   limits HFO/LSFO 0.8, MGO 0.7; selection priority HFO → LSFO → MGO; min 2 DGs at speed (St/By floor
-  = `stby.engineCount`). Boiler rates (`portBoilerRate` 0.19, `seaBoilerRate` 0.14 t/h MGO) are
+  = `stby.engineCount`). Boiler rates (`portBoilerRate` 0.20, `seaBoilerRate` 0.14 t/h MGO) are
   settings. The old abstract `computeStaticConsumption`/`computeStbyConsumption` (count + single fuel
   + MGO-escalation loop) are gone — extra MGO DGs are now emergent from fuel-priority selection over
   the closed-loop lineup.
@@ -198,7 +198,7 @@ which run at `thrusterHighKW` (default 9,000 = 3 × 3,000 kW); `thrusterAvgKW` t
 modeled **closed-loop at all times** and runs the **real DG lineup**: the St/By demand is fed to the
 shared core against `closeLoopEngines(settings.engines)` with a `stby.engineCount` floor, so the fuel
 split follows the lineup (DG1/DG2 stay HFO, DG3 MGO-locked, DG4→MGO) and honours DG availability —
-e.g. with one HFO-capable DG offline the plant runs 1×HFO + 2×MGO. Boilers: **port 0.19 t/h**,
+e.g. with one HFO-capable DG offline the plant runs 1×HFO + 2×MGO. Boilers: **port 0.20 t/h**,
 **sailing 0.14 t/h**, both MGO, now editable ship-default + per-voyage settings (`portBoilerRate` /
 `seaBoilerRate`). In-port fuel is a policy setting `inPortFuel` (default MGO) forced on every DG in
 port + tendering via `harbourEngines`. **Behaviour shift (CE-confirmed 2026-07-07 — St/By runs the
@@ -235,7 +235,7 @@ The engine is golden-locked via the **sea** cases: `consumption.test.ts` pins `c
 rates (speed 15/22/0) captured from the reference engine in `~/Projects/voyage-planner`, and these
 proved the shared-core extraction faithful. If numbers must change, change them there first or
 document the divergence. **Documented divergences (CE assumptions, 2026-07-07):** port boiler
-0.19 t/h vs the reference's 0.18, the sailing boiler (reference has none), the thruster profile
+0.20 t/h vs the reference's 0.18, the sailing boiler (reference has none), the thruster profile
 replacing the flat maneuvering aux, and the lineup-driven St/By/Port model (real closed-loop /
 harbour lineup with availability, replacing the reference's abstract count+fuel and the app's earlier
 MGO-escalation loop). The DG SFOC/load-sharing math itself remains golden-locked. **CE-confirmed

@@ -3,7 +3,7 @@
 // ported engine must reproduce them exactly.
 //
 // Documented divergences from the reference (CE-validated assumptions,
-// 2026-07-07): a port boiler (default 0.19 t/h; reference: 0.18), a sailing
+// 2026-07-07): a port boiler (default 0.20 t/h; reference: 0.18), a sailing
 // boiler (default 0.14 t/h) the reference lacks, and St/By running the real
 // closed-loop DG lineup (via computePlantConsumption — app-only, no reference
 // counterpart). Boiler rates are settings (ship default + per-voyage
