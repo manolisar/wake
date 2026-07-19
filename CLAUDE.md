@@ -64,7 +64,8 @@ System Access directory + file write).
   per-ship modules, no longer wired into the app (kept for reference/tests).
 - **`src/hooks/useWorkspace.ts`** — the state machine: dir handle + files, selection (file + voyage),
   leg mutations, lock/version + daily-password edit gate, **cross-file copy/paste**, debounced
-  write-back to disk (~1s; `Save` flushes now), and Excel export. Components are presentational.
+  write-back to disk (~1s; `Save` flushes now; a `beforeunload` guard in `App.tsx` warns if the tab
+  closes while a write is still queued), and Excel export. Components are presentational.
 - **`src/components/`** — `App.tsx` composes Header + Sidebar + main (CruiseCard, SummaryCards,
   LegsTable/LegRow, VersionHistory, MathExplainer) + `EditPasswordModal` (edit gate) + UnlockModal +
   Toast. The app opens read-only; there is no entry gate (see §5).
@@ -120,6 +121,24 @@ modules; do not pretend the current gates are ones.
   (`domain/ships.ts`) survive only as a `shipId` tag per file + for Excel naming. Crews add voyages
   with New Voyage (into the selected file) or by pasting a copy from another file. Legs are free-text
   ports (no catalog).
+- **Accessibility conventions** (2026-07-19 pass against the Vercel web-interface-guidelines; keep
+  new UI to them):
+  - Titles are real headings: `<h1>` on Landing/FolderGate (App keeps one sr-only `<h1>` per screen),
+    `<h2>` for every dialog and panel title (`aria-labelledby` targets included).
+  - Never `outline-none` without a focus replacement — the global `:focus-visible` ring in
+    `index.css` is the default cue; `focus:border-cyan` alone is not enough. Exception: the skip-link
+    target `<main tabIndex={-1}>`, focused only programmatically.
+  - Backdrop click-catchers are `<button aria-label="Close">` **siblings** of the panel (never a
+    wrapper — that nests button-in-button), plus Escape-to-close; modals go through
+    `useModalDialog` (focus trap + restore).
+  - Async updates announce themselves: `aria-live="polite"` / `role="status"` on the stale banner,
+    warnings, and unsaved indicators; decorative glyphs get `aria-hidden`.
+  - Destructive actions confirm first: leg delete (portalled from the row) and cruise delete both go
+    through `ConfirmModal`.
+  - No bare `transition` (= `transition: all`) — name the properties (`transition-[filter]`,
+    `transition-colors`); the skip-link animates `transform`, not `top`.
+  - Non-auth inputs carry a `name` + `autoComplete="off"`; placeholders show an example and end
+    with `…`; user-supplied strings truncate/`break-words` (route chips, filenames, version notes).
 
 ## 7. Excel round-trip (`src/storage/excel.ts`)
 
@@ -242,4 +261,4 @@ MGO-escalation loop). The DG SFOC/load-sharing math itself remains golden-locked
 2026-07-07:** St/By keeps the sea lineup's HFO (closed-loop), so existing all-MGO-standby setups
 re-attribute St/By burn from MGO to HFO (total tonnage unchanged).
 
-*Last updated: 2026-07-07.*
+*Last updated: 2026-07-19.*
