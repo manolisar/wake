@@ -191,7 +191,7 @@ export function Sidebar({
                     </span>
                   )}
                   {!file.error && (
-                    <span className="flex-shrink-0 font-mono text-[0.6rem] font-semibold text-faint">{Object.keys(file.voyages).length}</span>
+                    <span className="flex-shrink-0 font-mono text-[0.6rem] font-semibold text-muted">{Object.keys(file.voyages).length}</span>
                   )}
                 </button>
                 {clipboardCount > 0 && canMutate && !file.error && (
@@ -230,7 +230,7 @@ export function Sidebar({
                     const end = voyageEndDate(vo);
                     const range = start ? (end && end !== start ? `${fmtDate(start)} – ${fmtDate(end)}` : fmtDate(start)) : '—';
                     return (
-                      <div key={vo.id} className="group relative flex items-center">
+                      <div key={vo.id} className="vt-cv group relative flex items-center">
                         {active && <span className="absolute -left-[10px] top-1.5 bottom-1.5 w-[2px] rounded-full bg-cyan" aria-hidden="true" />}
                         <button
                           type="button"
@@ -246,13 +246,18 @@ export function Sidebar({
                           />
                           <span className="min-w-0 flex-1 text-left">
                             <span className="flex items-baseline gap-1.5">
-                              <span className="flex-shrink-0 font-mono text-[0.74rem] font-bold text-cyan-deep">
+                              {/* On the active row's cyan tint, plain cyan-deep /
+                                  faint fall under AA — mix with ink / use muted. */}
+                              <span
+                                className="flex-shrink-0 font-mono text-[0.74rem] font-bold"
+                                style={{ color: active ? 'color-mix(in srgb, var(--color-cyan-deep) 60%, var(--color-ink))' : 'var(--color-cyan-deep)' }}
+                              >
                                 {vo.number || '—'}
                               </span>
                               <span
                                 className="min-w-0 truncate font-mono text-[0.68rem] tabular-nums"
                                 style={{
-                                  color: active ? 'var(--color-cyan-deep)' : 'var(--color-ink)',
+                                  color: active ? 'color-mix(in srgb, var(--color-cyan-deep) 60%, var(--color-ink))' : 'var(--color-ink)',
                                   fontWeight: active ? 600 : 500,
                                 }}
                               >
@@ -260,7 +265,7 @@ export function Sidebar({
                               </span>
                             </span>
                             <span
-                              className="block truncate text-[0.64rem] text-faint"
+                              className={`block truncate text-[0.64rem] ${active ? 'text-muted' : 'text-faint'}`}
                               style={{ fontStyle: vo.title ? 'normal' : 'italic' }}
                             >
                               {vo.title || 'Untitled cruise'}

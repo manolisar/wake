@@ -77,7 +77,7 @@ export function CruiseCard({
           style={
             voyage.ended
               ? { background: 'rgba(107,123,143,0.18)', color: 'var(--color-muted)' }
-              : { background: 'rgba(16,185,129,0.18)', color: '#10b981' }
+              : { background: 'rgba(16,185,129,0.18)', color: 'var(--color-active-fg)' }
           }
         >
           {voyage.ended ? 'Ended' : 'Active'}

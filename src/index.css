@@ -12,24 +12,32 @@
   --color-surface: #ffffff;
   --color-rail: #f3f5f9;
   --color-ink: #1a2233;
-  --color-muted: #6b7b8f;
-  /* faint darkened from #b0bac6 (~1.9:1, failed WCAG AA) to ~4.6:1 on white */
-  --color-faint: #6b7689;
+  /* muted/faint darkened for WCAG AA (≥4.5:1) on bg/surface/rail — see the
+     2026-07-19 axe contrast audit. faint stays a touch darker than muted. */
+  --color-muted: #5c6b7d;
+  --color-faint: #66707f;
   --color-line: #e5e9f0;
 
-  --color-cyan: #06b6d4;
-  --color-cyan-deep: #0891b2;
-  --color-sky: #0284c7;
-  --color-indigo: #6366f1;
+  /* cyan (fills) darkened 06b6d4 → 0e7490 so white button text passes AA;
+     cyan-deep (computed-value text) merged onto the same AA-safe hue. */
+  --color-cyan: #0e7490;
+  --color-cyan-deep: #0e7490;
+  --color-sky: #0369a1;
+  --color-indigo: #4f46e5;
   --color-navy: #102a43;
   /* strong filled button (Lock Voyage) — overridden per theme for contrast */
   --color-btn-strong: #102a43;
-  --color-green: #059669;
-  --color-amber: #d97706;
-  --color-amber-btn: #f59e0b;
-  --color-orange: #ea580c;
-  --color-pink: #db2777;
+  /* accent text hues, all ≥4.5:1 on the light surfaces (amber/green/indigo
+     double as the HFO/MGO/LSFO fuel text colors) */
+  --color-green: #047857;
+  --color-amber: #b45309;
+  /* filled amber button (Enable Edit, Recalculate) — white text passes AA */
+  --color-amber-btn: #b45309;
+  --color-orange: #c2410c;
+  --color-pink: #be185d;
   --color-blue: #2563eb;
+  /* "Active" status pill text (on its green tint) */
+  --color-active-fg: #065f46;
 
   /* speed-band badges */
   --color-spd-hi-fg: #b91c1c;
@@ -62,10 +70,13 @@
   --color-surface: #f7f1e1;
   --color-rail: #e8dfc8;
   --color-ink: #25303b;
-  --color-muted: #6c6553;
-  --color-faint: #847d69;
+  --color-muted: #5f5745;
+  --color-faint: #675f4b;
   --color-line: #d7cbac;
   --color-btn-strong: #2b3a30;
+  /* amber/green need an extra step darker on parchment (surface, warn tint) */
+  --color-amber: #92400e;
+  --color-green: #046b4f;
   --color-warn-bg: #f4ead0;
   --color-warn-border: #e2c96f;
   --color-scroll-thumb: #cbbf9f;
@@ -80,13 +91,27 @@
   --color-rail: #16283a;
   --color-ink: #e6eef7;
   --color-muted: #9db0c4;
-  --color-faint: #6e8499;
+  --color-faint: #8ba0b4;
   --color-line: #22384c;
   --color-btn-strong: #244763;
+  /* accent text needs LIGHTER variants on the dark surfaces (AA ≥4.5:1) */
+  --color-cyan-deep: #4dd6f0;
+  --color-amber: #d97706;
+  --color-green: #34d399;
+  --color-indigo: #818cf8;
+  --color-pink: #f472b6;
+  --color-sky: #38bdf8;
+  --color-orange: #fb923c;
+  --color-blue: #60a5fa;
+  --color-active-fg: #34d399;
   /* brighter speed-band text so the coloured digits read on the dark surface */
   --color-spd-hi-fg: #f87171;
   --color-spd-lo-fg: #a78bfa;
   --color-spd-ok-fg: #34d399;
+  /* dark band backgrounds to match (the inherited light tints failed 1.8:1) */
+  --color-spd-hi-bg: #3b1515;
+  --color-spd-lo-bg: #2a1a45;
+  --color-spd-ok-bg: #0b2e21;
   --color-warn-bg: #2b2210;
   --color-warn-border: #6d5a1e;
   --color-scroll-thumb: #2e4356;
@@ -120,9 +145,10 @@ button {
 }
 
 /* Keyboard focus ring for every interactive element (zero-specificity :where
-   so component classes can still override). Visible only for keyboard users. */
+   so component classes can still override). Visible only for keyboard users.
+   cyan-deep clears the 3:1 non-text contrast bar on all three themes. */
 :where(button, a, input, textarea, select, [role='button'], [tabindex]):focus-visible {
-  outline: 2px solid var(--color-cyan);
+  outline: 2px solid var(--color-cyan-deep);
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -201,6 +227,14 @@ button {
   animation: vtScaleIn 0.15s ease;
 }
 
+/* Cheap virtualization substitute for rows in unbounded lists (sidebar voyages,
+   version history): off-screen rows skip layout/paint, intrinsic size keeps the
+   scrollbar stable. No effect in print (rows are .vt-no-print or all visible). */
+.vt-cv {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 44px;
+}
+
 /* themed scrollbar (from the design) */
 .vt-scroll::-webkit-scrollbar {
   width: 10px;
@@ -268,6 +302,10 @@ td:focus-within .vt-fill-handle,
   main,
   .vt-scroll {
     overflow: visible !important;
+  }
+  /* Chromium can skip content-visibility:auto rows when printing. */
+  .vt-cv {
+    content-visibility: visible;
   }
   * {
     box-shadow: none !important;

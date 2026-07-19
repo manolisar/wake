@@ -105,7 +105,7 @@ export function Header({
       <div className="min-w-0">
         <div className="truncate text-[0.95rem] font-extrabold leading-tight tracking-[-0.2px]">
           {APP_NAME} <span className="align-middle text-[0.62rem] font-semibold text-faint">v{APP_VERSION}</span>{' '}
-          {fileName && <span className="font-medium opacity-65">— {fileName}</span>}
+          {fileName && <span className="font-medium text-muted">— {fileName}</span>}
         </div>
         <div className="truncate font-mono text-[0.6rem] uppercase tracking-[1px] text-faint">
           <FolderIcon size={9} /> {dirName || 'no folder'}

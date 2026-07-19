@@ -8,9 +8,10 @@ import { FIELD_COL, FIELD_SPEC, FROZEN, isInvalid } from '../domain/fieldTypes';
 import { ConfirmModal } from './ConfirmModal';
 
 const TYPE_CHIP: Record<LegType, { label: string; bg: string; fg: string; bd: string; row: string; solid: string }> = {
-  Port: { label: 'PORT', bg: '#EFF6FF', fg: '#2563EB', bd: '#BFDBFE', row: 'var(--color-surface)', solid: 'var(--color-surface)' },
-  Sea: { label: 'SEA', bg: '#ECFEFF', fg: '#0891b2', bd: '#A5F3FC', row: 'rgba(2,132,199,0.05)', solid: 'color-mix(in srgb, #0284C7 5%, var(--color-surface))' },
-  Tender: { label: 'TENDER', bg: '#FFF7ED', fg: '#EA580C', bd: '#FED7AA', row: 'rgba(234,88,12,0.06)', solid: 'color-mix(in srgb, #EA580C 6%, var(--color-surface))' },
+  // fg uses the theme accent tokens (AA-safe per theme, incl. console overrides)
+  Port: { label: 'PORT', bg: '#EFF6FF', fg: 'var(--color-blue)', bd: '#BFDBFE', row: 'var(--color-surface)', solid: 'var(--color-surface)' },
+  Sea: { label: 'SEA', bg: '#ECFEFF', fg: 'var(--color-cyan-deep)', bd: '#A5F3FC', row: 'rgba(2,132,199,0.05)', solid: 'color-mix(in srgb, #0284C7 5%, var(--color-surface))' },
+  Tender: { label: 'TENDER', bg: '#FFF7ED', fg: 'var(--color-orange)', bd: '#FED7AA', row: 'rgba(234,88,12,0.06)', solid: 'color-mix(in srgb, #EA580C 6%, var(--color-surface))' },
 };
 
 // Speed-band warning colours. In-band speeds render in plain ink; only the
@@ -302,7 +303,7 @@ function LegRowImpl({
               aria-pressed={leg.mode === 'speed'}
               aria-label="Speed mode: enter times, compute speed"
               className="vt-unbutton px-3 py-[4px] text-[0.62rem] font-extrabold tracking-[0.7px]"
-              style={leg.mode === 'speed' ? { background: '#06b6d4', color: '#fff' } : { background: 'var(--color-surface)', color: 'var(--color-muted)' }}
+              style={leg.mode === 'speed' ? { background: '#0e7490', color: '#fff' } : { background: 'var(--color-surface)', color: 'var(--color-muted)' }}
             >
               SPD
             </button>
@@ -313,7 +314,7 @@ function LegRowImpl({
               aria-pressed={leg.mode !== 'speed'}
               aria-label="Time mode: enter target speed, compute ETA"
               className="vt-unbutton border-l-2 border-line px-3 py-[4px] text-[0.62rem] font-extrabold tracking-[0.7px]"
-              style={leg.mode !== 'speed' ? { background: '#6366F1', color: '#fff' } : { background: 'var(--color-surface)', color: 'var(--color-muted)' }}
+              style={leg.mode !== 'speed' ? { background: '#4f46e5', color: '#fff' } : { background: 'var(--color-surface)', color: 'var(--color-muted)' }}
             >
               TIME
             </button>

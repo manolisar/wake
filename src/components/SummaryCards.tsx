@@ -37,9 +37,12 @@ export function SummaryCards({ summary }: { summary: Summary }) {
           style={{ background: `color-mix(in srgb, ${c.color} 6%, var(--color-surface))` }}
         >
           <div className="h-2" style={{ background: c.color }} />
+          {/* Text mixes the band with ink (40%) instead of using the raw band:
+              the bright bands failed WCAG AA on their own tints (down to 1.55:1),
+              and mixing with the theme's ink keeps it readable on all 3 themes. */}
           <div
             className="flex items-center justify-between border-b border-line px-3.5 py-2 text-[0.6rem] font-bold uppercase tracking-[1.5px]"
-            style={{ color: c.color, background: `color-mix(in srgb, ${c.color} 8%, var(--color-rail))` }}
+            style={{ color: `color-mix(in srgb, ${c.color} 40%, var(--color-ink))`, background: `color-mix(in srgb, ${c.color} 8%, var(--color-rail))` }}
           >
             <span>{c.label}</span>
             <span className="font-mono text-[0.6rem] normal-case tracking-[0.5px] text-muted">{c.unit}</span>
@@ -47,7 +50,7 @@ export function SummaryCards({ summary }: { summary: Summary }) {
           <div className="flex flex-wrap items-baseline gap-1.5 px-3.5 py-2.5">
             <span
               className="font-mono text-[1.4rem] font-extrabold leading-none [font-variant-numeric:tabular-nums]"
-              style={{ color: c.color }}
+              style={{ color: `color-mix(in srgb, ${c.color} 40%, var(--color-ink))` }}
             >
               {c.value}
             </span>

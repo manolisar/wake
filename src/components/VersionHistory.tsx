@@ -2,7 +2,7 @@
 import type { Version } from '../types';
 
 function colorsFor(action: string): { color: string; bg: string } {
-  if (action === 'Unlocked') return { color: '#D97706', bg: 'rgba(217,119,6,0.12)' };
+  if (action === 'Unlocked') return { color: 'var(--color-amber)', bg: 'rgba(217,119,6,0.12)' };
   if (action === 'Locked') return { color: 'var(--color-muted)', bg: 'var(--color-rail)' };
   return { color: 'var(--color-cyan-deep)', bg: 'rgba(6,182,212,0.12)' };
 }
@@ -23,7 +23,7 @@ export function VersionHistory({ versions }: { versions: Version[] }) {
           return (
             <div
               key={i}
-              className="grid grid-cols-[auto_1fr_auto] items-start gap-2.5 border-b border-line px-4 py-2.5 last:border-b-0"
+              className="vt-cv grid grid-cols-[auto_1fr_auto] items-start gap-2.5 border-b border-line px-4 py-2.5 last:border-b-0"
             >
               <span
                 className="rounded-[5px] px-1.5 py-0.5 font-mono text-[0.66rem] font-extrabold"
