@@ -30,13 +30,19 @@ export const trialData = [
   { speed: 25, power: 49158 },
 ];
 
+// SFOC curve on an ENERGY (ISO 3046/1) basis — the FAT ISO-corrected column for
+// engine PAAE072242 (16V46CR), referenced to 42.7 MJ/kg (REF_LHV_MJ_KG). This is
+// the fuel-independent efficiency curve; as-burned g/kWh per leg is this value
+// scaled by REF_LHV / fuelLHV in computePlantConsumption. Replaces the old
+// voyage-planner curve (FAT *measured*, single-fuel) — see CLAUDE.md §8. The 0.40
+// node lies on the 0.25→0.50 line (kept for shape; a no-op for interpolation).
 export const sfocPoints = [
-  { load: 0.25, sfoc: 205.58 },
-  { load: 0.4, sfoc: 202.0 },
-  { load: 0.5, sfoc: 201.83 },
-  { load: 0.75, sfoc: 200.5 },
-  { load: 0.85, sfoc: 187.56 },
-  { load: 1.0, sfoc: 194.31 },
+  { load: 0.25, sfoc: 201.34 },
+  { load: 0.4, sfoc: 195.46 },
+  { load: 0.5, sfoc: 191.54 },
+  { load: 0.75, sfoc: 183.21 },
+  { load: 0.85, sfoc: 179.89 },
+  { load: 1.0, sfoc: 186.85 },
 ];
 
 export const NOMINAL_KW = 16800;

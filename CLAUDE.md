@@ -180,7 +180,18 @@ The consumption fields (`stbyArrPowerMW`/`stbyDepPowerMW` on legs, `consumptionO
 The SL Class engine, ported verbatim from `~/Projects/voyage-planner` (4 × Wärtsilä 16V46,
 `NOMINAL_KW = 16800`; DG3 MGO-locked — no HFO bunker line; DG4 open-loop scrubber only):
 
-- `trialData.ts` — FAT curves (speed → prop kW, load fraction → SFOC g/kWh).
+- `trialData.ts` — FAT curves (speed → prop kW, and load fraction → SFOC g/kWh). **The SFOC curve is
+  on an energy (ISO 3046/1) basis** — the FAT ISO-corrected column for engine PAAE072242, referenced
+  to `REF_LHV_MJ_KG` = 42.7 MJ/kg. It is the fuel-independent *efficiency* curve; as-burned g/kWh per
+  DG = `interpSFOC(lf) × (REF_LHV / fuelLHV) × (1 + sfocDet/100)`, with `FUEL_LHV_MJ_KG` (HFO 40.2 =
+  IFO380, MGO 42.7 = DMA reference so factor 1.0, LSFO 41.0) in `engineDefaults.ts`. This replaced the
+  original voyage-planner curve (FAT *measured*, single fuel, no LHV), which over-counted MGO and
+  carried a transcription bug at 75% load (200.5 vs FAT ISO 183.21). Validated against Eclipse DG
+  performance tests (HFO ≈ 196 g/kWh @ 81%, MGO ≈ 186 @ 75%) — both reproduced with `sfocDet` = 2%
+  (measured in-service deterioration ≈ +1.6% ISO). **Scope: valid only for the three identical sisters
+  SL/EQ/EC** (Wärtsilä 16V46). SI/RF run MAN plants (RF also a different tonnage); `ships.ts` tags
+  `plant` and `isModeledPlant()` gates a "not validated" caveat on the Consumption tab for them — a
+  MAN model is future work.
 - `interpolation.ts` / `loadSharing.ts` / `consumption.ts` — the shared plant core
   `computePlantConsumption(totalKW, engines, sfocDet, minEngines)` → `CalculationResult` (per-fuel
   t/h, per-DG loads, overload flags): selects DGs from the real lineup (fuel-priority, availability)
@@ -255,14 +266,17 @@ A snapshot from before the shared-plant-core rewrite (St/By/Port phases lacking 
 its empty state and the user recalculates rather than crashing.
 
 The engine is golden-locked via the **sea** cases: `consumption.test.ts` pins `computeConsumption`
-rates (speed 15/22/0) captured from the reference engine in `~/Projects/voyage-planner`, and these
-proved the shared-core extraction faithful. If numbers must change, change them there first or
-document the divergence. **Documented divergences (CE assumptions, 2026-07-07):** port boiler
-0.20 t/h vs the reference's 0.18, the sailing boiler (reference has none), the thruster profile
-replacing the flat maneuvering aux, and the lineup-driven St/By/Port model (real closed-loop /
-harbour lineup with availability, replacing the reference's abstract count+fuel and the app's earlier
-MGO-escalation loop). The DG SFOC/load-sharing math itself remains golden-locked. **CE-confirmed
-2026-07-07:** St/By keeps the sea lineup's HFO (closed-loop), so existing all-MGO-standby setups
-re-attribute St/By burn from MGO to HFO (total tonnage unchanged).
+rates (speed 15/22/0). These were **re-captured from the current engine after the FAT-ISO + LHV
+rebaseline** (2026-07-23) — they no longer match the original voyage-planner reference, by design.
+The **load-sharing / DG-selection math is unchanged**; only the SFOC basis changed (ISO curve + per-fuel
+LHV), so HFO burn is ~flat while MGO/port burn drops (the old MGO over-estimate). If numbers must
+change, change them there first or document the divergence. **Documented divergences:** the FAT-ISO +
+LHV SFOC model (2026-07-23, above — replacing the single measured curve; validated vs Eclipse
+Voyage-Tracker data); port boiler 0.20 t/h vs the reference's 0.18; the sailing boiler (reference has
+none); the thruster profile replacing the flat maneuvering aux; and the lineup-driven St/By/Port model
+(real closed-loop / harbour lineup with availability, replacing the reference's abstract count+fuel and
+the app's earlier MGO-escalation loop). **CE-confirmed 2026-07-07:** St/By keeps the sea lineup's HFO
+(closed-loop), so existing all-MGO-standby setups re-attribute St/By burn from MGO to HFO (total
+tonnage unchanged).
 
-*Last updated: 2026-07-19.*
+*Last updated: 2026-07-23.*

@@ -6,6 +6,7 @@ import { useTheme, type Theme } from './hooks/useTheme';
 import { useWorkspace, type WorkspaceApi } from './hooks/useWorkspace';
 import { computeVoyage } from './domain/calculations';
 import { roleLabel } from './domain/roles';
+import { isModeledPlant } from './domain/ships';
 import { LandingScreen } from './components/LandingScreen';
 import { FolderGate } from './components/FolderGate';
 import { Header } from './components/Header';
@@ -282,6 +283,18 @@ function Workspace({
                 </div>
               ) : (
                 <div id="vst-panel-fuel" role="tabpanel" aria-labelledby="vst-tab-fuel">
+                  {!isModeledPlant(w.shipCode) && (
+                    <div
+                      role="status"
+                      className="flex items-center gap-2 border-b border-warn-border bg-warn-bg px-5 py-2.5"
+                    >
+                      <span aria-hidden="true" className="text-amber">⚠</span>
+                      <span className="text-[0.72rem] font-semibold text-amber">
+                        This ship runs a MAN plant — the consumption model (Wärtsilä 16V46) is not
+                        validated for it. Figures are indicative only.
+                      </span>
+                    </div>
+                  )}
                   <ConsumptionReport
                     voyage={w.current}
                     consumption={w.consumptionResult}

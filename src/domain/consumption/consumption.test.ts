@@ -1,13 +1,16 @@
-// Golden numbers in this file were captured by running the REFERENCE engine in
-// ~/Projects/voyage-planner (npx tsx, 2026-07-05) with identical inputs. The
-// ported engine must reproduce them exactly.
+// Golden numbers were re-captured from THIS engine after the FAT-ISO + LHV
+// rebaseline (see CLAUDE.md §8): the sfocPoints curve now holds FAT ISO 3046/1
+// values (energy basis) and per-DG burn scales by REF_LHV / fuelLHV. This
+// deliberately diverges from the original voyage-planner goldens (single
+// measured curve, no LHV) — HFO burn is ~flat (curve down, LHV up cancel),
+// MGO/port burn drops (the old MGO over-estimate, now corrected). The
+// load-sharing / DG-selection math is unchanged.
 //
-// Documented divergences from the reference (CE-validated assumptions,
-// 2026-07-07): a port boiler (default 0.20 t/h; reference: 0.18), a sailing
-// boiler (default 0.14 t/h) the reference lacks, and St/By running the real
-// closed-loop DG lineup (via computePlantConsumption — app-only, no reference
-// counterpart). Boiler rates are settings (ship default + per-voyage
-// override) as of the boiler-rate-settings task.
+// Other documented divergences (CE-validated 2026-07-07): a port boiler
+// (default 0.20 t/h; reference: 0.18), a sailing boiler (default 0.14 t/h) the
+// reference lacks, and St/By running the real closed-loop DG lineup (via
+// computePlantConsumption). Boiler rates are settings (ship default + per-voyage
+// override).
 import { describe, it, expect } from 'vitest';
 import {
   computeConsumption,
@@ -22,29 +25,29 @@ import type { EngineState } from './types';
 const settings = DEFAULT_CONSUMPTION_SETTINGS; // hotel 8000, margin 0, det 2, aux 1500
 const engines: EngineState[] = settings.engines; // DG1/2/4 HFO, DG3 MGO
 
-describe('computeConsumption (golden cross-check vs voyage-planner)', () => {
-  it('speed 15, defaults → 2 HFO DGs at 10228 kW, 4.199129 t/h HFO', () => {
+describe('computeConsumption (golden: FAT-ISO + LHV engine)', () => {
+  it('speed 15, defaults → 2 HFO DGs at 10228 kW, 4.164692 t/h HFO', () => {
     const r = computeConsumption(15, engines, settings);
     expect(r.propPowerKW).toBeCloseTo(12456, 6);
     expect(r.totalPowerKW).toBeCloseTo(20456, 6);
     expect(r.numRunning).toBe(2);
-    expect(r.hfoRate).toBeCloseTo(4.199129047136, 10);
+    expect(r.hfoRate).toBeCloseTo(4.164692343050429, 10);
     expect(r.mgoRate).toBe(0);
-    expect(r.totalRate).toBeCloseTo(4.199129047136, 10);
+    expect(r.totalRate).toBeCloseTo(4.164692343050429, 10);
     expect(r.insufficient).toBe(false);
     const running = r.engineResults.filter((e) => e.status === 'RUNNING');
     expect(running.map((e) => e.id)).toEqual([1, 2]);
     expect(running[0].loadKW).toBeCloseTo(10228, 0);
   });
 
-  it('speed 22, defaults → all 4 DGs equal-share, HFO 6.2243 + MGO 2.07477 t/h', () => {
+  it('speed 22, defaults → all 4 DGs equal-share, HFO 6.18006 + MGO 1.93941 t/h', () => {
     const r = computeConsumption(22, engines, settings);
     expect(r.propPowerKW).toBeCloseTo(32421, 6);
     expect(r.totalPowerKW).toBeCloseTo(40421, 6);
     expect(r.numRunning).toBe(4);
-    expect(r.hfoRate).toBeCloseTo(6.224302592691937, 10);
-    expect(r.mgoRate).toBeCloseTo(2.0747675308973124, 10);
-    expect(r.totalRate).toBeCloseTo(8.29907012358925, 10);
+    expect(r.hfoRate).toBeCloseTo(6.180061772842414, 10);
+    expect(r.mgoRate).toBeCloseTo(1.9394104860910624, 10);
+    expect(r.totalRate).toBeCloseTo(8.119472258933477, 10);
     const running = r.engineResults.filter((e) => e.status === 'RUNNING');
     running.forEach((e) => expect(e.loadKW).toBeCloseTo(40421 / 4, 0));
   });
@@ -62,8 +65,8 @@ describe('computePlantConsumption (shared core)', () => {
     const wl = settings.engines;
     const r = computePlantConsumption(20456, wl, settings.sfocDet, 2);
     expect(r.numRunning).toBe(2);
-    expect(r.hfoRate).toBeCloseTo(4.199129047136, 10);
-    expect(r.totalRate).toBeCloseTo(4.199129047136, 10);
+    expect(r.hfoRate).toBeCloseTo(4.164692343050429, 10);
+    expect(r.totalRate).toBeCloseTo(4.164692343050429, 10);
   });
   it('honours availability — DG1 offline shifts the mix', () => {
     const noDg1 = settings.engines.map((e) => (e.id === 1 ? { ...e, available: false } : e));
@@ -101,11 +104,11 @@ describe('harbourEngines', () => {
 });
 
 describe('computePortConsumption (DG core + boiler)', () => {
-  it('8 MW hotel / harbour MGO / floor 1 / det 2 / 10 h / boiler 0.19 → preserved DG golden', () => {
+  it('8 MW hotel / harbour MGO / floor 1 / det 2 / 10 h / boiler 0.19 → 1-DG-MGO golden', () => {
     const r = computePortConsumption(8000, settings.engines, 'MGO', { sfocDet: 2, minEngines: 1, boilerRate: 0.19, hours: 10 });
-    expect(r.dgRate).toBeCloseTo(1.6472630857142858, 10); // 1-DG-MGO golden preserved
+    expect(r.dgRate).toBeCloseTo(1.5705824, 10); // 1-DG-MGO, FAT-ISO curve (MGO LHV factor = 1.0)
     expect(r.boilerMT).toBeCloseTo(1.9, 10);
-    expect(r.totalMT).toBeCloseTo(1.6472630857142858 * 10 + 1.9, 10);
+    expect(r.totalMT).toBeCloseTo(1.5705824 * 10 + 1.9, 10);
     expect(r.result.numRunning).toBe(1);
     expect(r.result.engineResults.find((e) => e.status === 'RUNNING')!.fuel).toBe('MGO');
   });

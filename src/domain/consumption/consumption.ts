@@ -6,7 +6,7 @@
 // and the DG4 close-loop / harbour-fuel transforms.
 
 import { NOMINAL_KW } from './trialData';
-import { engineConfigs } from './engineDefaults';
+import { engineConfigs, REF_LHV_MJ_KG, FUEL_LHV_MJ_KG } from './engineDefaults';
 import { interpPropPower, interpSFOC } from './interpolation';
 import { getEngineWithLimits, selectEngines, distributeLoad } from './loadSharing';
 import type { EngineState, EngineResult, CalculationResult, FuelType, VesselSettings } from './types';
@@ -81,7 +81,7 @@ export function computePlantConsumption(
   runningEngines.forEach((e) => {
     const kw = engineLoads.get(e.id) || 0;
     const lf = kw / NOMINAL_KW;
-    const sfoc = interpSFOC(lf) * (1 + sfocDet / 100);
+    const sfoc = interpSFOC(lf) * (REF_LHV_MJ_KG / FUEL_LHV_MJ_KG[e.fuel]) * (1 + sfocDet / 100);
     const cons = (sfoc * kw) / 1e6;
     if (e.fuel === 'HFO') hfoRate += cons;
     else if (e.fuel === 'LSFO') lsfoRate += cons;
@@ -98,7 +98,7 @@ export function computePlantConsumption(
     if (runningIds.has(eng.id)) {
       const kw = engineLoads.get(eng.id) || 0;
       const lf = kw / NOMINAL_KW;
-      const sfoc = interpSFOC(lf) * (1 + sfocDet / 100);
+      const sfoc = interpSFOC(lf) * (REF_LHV_MJ_KG / FUEL_LHV_MJ_KG[eng.fuel]) * (1 + sfocDet / 100);
       return {
         id: eng.id, status: 'RUNNING' as const, loadKW: kw, loadFraction: lf,
         loadLimit: eng.loadLimit, overloaded: lf > eng.loadLimit,

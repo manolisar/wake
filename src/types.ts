@@ -93,6 +93,12 @@ export interface Ship {
   code: ShipCode;
   name: string;
   built: number;
+  /**
+   * Prime-mover plant. The consumption engine models the Wärtsilä 16V46 shared
+   * by the three identical sisters (SL/EQ/EC). SI/RF run MAN plants (RF also a
+   * different tonnage) — the model is NOT validated for them. See CLAUDE.md §8.
+   */
+  plant: 'wartsila-46' | 'man';
 }
 
 // Bridge/engine roles. `Marine` is view-only; everyone else may edit.

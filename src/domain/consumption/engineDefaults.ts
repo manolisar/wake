@@ -23,6 +23,18 @@ export const FUEL_PRIORITY: Record<FuelType, number> = {
   MGO: 2,
 };
 
+// Fuel lower heating values (net CV, MJ/kg). The sfocPoints curve is on the ISO
+// 3046 reference (REF_LHV_MJ_KG); as-burned SFOC scales by REF_LHV / fuelLHV, so
+// a lower-energy fuel burns proportionally more g/kWh for the same efficiency.
+// Standard marine values: IFO380 ≈ 40.2, DMA gas oil ≈ 42.7 (= reference, so MGO
+// factor = 1.000), VLSFO ≈ 41.0. See CLAUDE.md §8.
+export const REF_LHV_MJ_KG = 42.7;
+export const FUEL_LHV_MJ_KG: Record<FuelType, number> = {
+  HFO: 40.2,
+  MGO: 42.7,
+  LSFO: 41.0,
+};
+
 /** Ship-level defaults — the final fallback when a bundle carries none. */
 export const DEFAULT_CONSUMPTION_SETTINGS: ConsumptionSettings = {
   hotelLoad: 8000, // kW

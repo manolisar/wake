@@ -21,17 +21,17 @@ describe('interpPropPower', () => {
 
 describe('interpSFOC', () => {
   it('returns exact curve points', () => {
-    expect(interpSFOC(0.85)).toBe(187.56);
-    expect(interpSFOC(0.25)).toBe(205.58);
-    expect(interpSFOC(1.0)).toBe(194.31);
+    expect(interpSFOC(0.85)).toBe(179.89);
+    expect(interpSFOC(0.25)).toBe(201.34);
+    expect(interpSFOC(1.0)).toBe(186.85);
   });
 
-  it('interpolates between points (golden: reference engine)', () => {
-    expect(interpSFOC(0.6)).toBeCloseTo(201.298, 6);
+  it('interpolates between points (FAT ISO 3046/1 curve)', () => {
+    expect(interpSFOC(0.6)).toBeCloseTo(188.208, 6);
   });
 
   it('clamps outside the curve', () => {
-    expect(interpSFOC(0.1)).toBe(205.58);
-    expect(interpSFOC(1.2)).toBe(194.31);
+    expect(interpSFOC(0.1)).toBe(201.34);
+    expect(interpSFOC(1.2)).toBe(186.85);
   });
 });
